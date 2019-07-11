@@ -1,0 +1,6 @@
+# Go builds
+/pkg
+/bin
+
+/build
+/notes.db
