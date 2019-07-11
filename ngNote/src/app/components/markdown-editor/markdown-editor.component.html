@@ -1,0 +1,107 @@
+<tabset>
+
+	<!-- Editor tab -->
+	<tab heading="Edit"
+		 [ngStyle]="{'height': (tabHeight == 0) ? 'auto' : tabHeight + 'px'}">
+		<div class="editor">
+
+			<!-- Editor controls -->
+			<div class="editorctl">
+
+				<!-- Line mutators -->
+				<div class="btn-group">
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('header')"
+							tooltip="Header">
+						<i class="fas fa-heading"></i>
+					</button>
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('ulist')"
+							tooltip="Unordered List">
+						<i class="fas fa-list-ul"></i>
+					</button>
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('olist')"
+							tooltip="Ordered List">
+						<i class="fas fa-list-ol"></i>
+					</button>
+				</div>
+				<!-- /Line mutators -->
+
+				<!-- Around mutators -->
+				<div class="btn-group">
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('bold')"
+							tooltip="Bold">
+						<i class="fas fa-bold"></i>
+					</button>
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('italic')"
+							tooltip="Italic">
+						<i class="fas fa-italic"></i>
+					</button>
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('icode')"
+							tooltip="Inline Code">
+						<i class="fas fa-code"></i>
+					</button>
+				</div>
+				<!-- /Around mutators -->
+
+				<!-- Component mutators -->
+				<div class="btn-group">
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('link')"
+							tooltip="Link">
+						<i class="fas fa-link"></i>
+					</button>
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('image')"
+							tooltip="Picture">
+						<i class="fas fa-image"></i>
+					</button>
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('codeblock')"
+							tooltip="Code Block">
+						<i class="fas fa-file-code"></i>
+					</button>
+					<button type="button"
+							class="btn btn-primary btn-sm"
+							(click)="Apply('hr')"
+							tooltip="Horizontal Row">
+						━
+					</button>
+				</div>
+				<!-- /Component mutators -->
+
+			</div>
+			<!-- /Editor controls -->
+
+			<!-- Editor input -->
+			<div class="editorinput">
+				<textarea [formControl]="inputControl"
+				          (keydown)="onInputKeydown($event)"></textarea>
+			</div>
+			<!-- /Editor input -->
+
+		</div>
+	</tab>
+	<!-- /Editor tab -->
+
+	<!-- Preview tab -->
+	<tab heading="Preview"
+		 [ngStyle]="{'height': (tabHeight == 0) ? 'auto' : tabHeight + 'px'}">
+		<markdown [data]="input.value"></markdown>
+	</tab>
+	<!-- /Preview tab -->
+
+</tabset>

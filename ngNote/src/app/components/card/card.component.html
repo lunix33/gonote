@@ -1,0 +1,11 @@
+<div class="card">
+    <div *ngIf="header" class="card-header">
+        <h4>{{header}}</h4>
+    </div>
+    <div [ngClass]="{'nopad': nopad, 'card-body': true}">
+        <ng-content></ng-content>
+    </div>
+    <div *ngIf="footer" class="card-footer">
+        {{footer}}
+    </div>
+</div>

@@ -1,0 +1,32 @@
+<div class="row">
+	<app-navigation class="col-md-3"></app-navigation>
+	<div class="col col-md-9">
+		<app-card header="Details">
+			<div class="details row">
+
+				<div class="col-md-6">
+					<h3>
+						{{note.Title}}
+						<a *ngIf="note.Author == author"
+						   [routerLink]="['/note', note.ID, 'edit']"
+						   tooltip="Edit the note">
+							<i class="fas fa-edit"></i>
+						</a>
+					</h3>
+					<p class="nobot">
+						by {{note.Author}}
+					</p>
+				</div>
+
+				<div class="col-md-6 text-md-right">
+					<p class="nobot">Created on {{note.Added}}</p>
+					<p>Last update on {{note.Updated}}</p>
+				</div>
+			</div>
+		</app-card>
+
+		<app-card header="Content">
+			<markdown [data]="note.Content"></markdown>
+		</app-card>
+	</div>
+</div>

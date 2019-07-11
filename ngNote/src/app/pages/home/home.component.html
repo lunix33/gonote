@@ -1,0 +1,62 @@
+<section>
+    <app-card header="Author">
+        <div class="form-group">
+            <input class="form-control"
+                   [value]="author"
+                   [formControl]="authorControl"
+                   type="text"
+                   placeholder="Note author name" />
+            
+            <small class="text-muted">
+                The name in that field will be used as the author name for all the newly created notes.
+            </small>
+        </div>
+    </app-card>
+
+    <app-card nopad
+              header="Notes">
+        <table class="table table-hover">
+            <!-- Table head -->
+            <thead>
+                <tr>
+                    <th>Author</th>
+                    <th>Title</th>
+                    <th>Created</th>
+                    <th>Last update</th>
+                    <th>
+                        <a routerLink="/note/add">
+                            <i class="fas fa-plus" tooltip="Add"></i>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <!-- /Table head -->
+
+            <!-- Table content -->
+            <tbody>
+                <tr *ngFor="let n of notes">
+                    <td>{{n.Author}}</td>
+                    <td>
+                        <a [routerLink]="['/note', n.ID]">
+                            {{n.Title}}
+                        </a>
+                    </td>
+                    <td>{{n.Added}}</td>
+                    <td>{{n.Updated}}</td>
+                    <td class='tools'>
+                        <a [routerLink]="['/note', n.ID, 'edit']">
+                            <i class="fas fa-edit" tooltip="Edit"></i>
+                        </a>
+                        <a href="#" (click)="onDeleteBtnClick($event, n)">
+                            <i class="fas fa-trash" tooltip="Delete"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr *ngIf="notes.length === 0">
+                    <td colspan="5">No note available</td>
+                </tr>
+            </tbody>
+            <!-- /Table content -->
+        </table>
+    </app-card>
+</section>
