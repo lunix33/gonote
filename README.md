@@ -9,11 +9,11 @@ The current project is made to be able to run under Linux and Windows.
 ## Requirement
 
 * For the backend
-    * (Go compiler)[https://golang.org/dl/]
-    * (mingw-w64)[https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe/download] - For Windows (Be sure to add the `bin` folder of mingw-w64 to your `PATH` to make gcc available in the commandline.)
+    * [Go compiler](https://golang.org/dl/)
+    * [mingw-w64](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe/download) - For Windows (Be sure to add the `bin` folder of mingw-w64 to your `PATH` to make gcc available in the commandline.)
     * GCC - For Linux
 * For the frontend
-    * (NodeJS)[https://nodejs.org/en/]
+    * [NodeJS](https://nodejs.org/en/)
 
 ## How to install
 
@@ -23,7 +23,7 @@ The result of the build will be available in the `build` folder.
 # Using
 
 Simply run the `gonote(.exe)` executable available in the `build` folder.
-Once the application tells you it's listening open a web browser and navigate to: (localhost:8080)[http://localhost:8080/].
+Once the application tells you it's listening open a web browser and navigate to: [localhost:8080](http://localhost:8080/).
 
 # What if I don't want to build the sources?
 
