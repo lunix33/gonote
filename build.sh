@@ -13,7 +13,7 @@ export GOPATH=$cdir
 
 # Frontend.
 echo "**** Building frontend..."
-cd $cdir/ngNote/
+cd $cdir/ngnote/
 echo "*** Installing dependancies ..."
 npm install
 echo "** Building scripts..."
@@ -40,7 +40,7 @@ mv $cdir/notes.db $cdir/build/
 echo "** Copy executable ..."
 cp $cdir/bin/gonote.exe $cdir/build/
 echo "* Copy frontend files..."
-cp $cdir/ngNote/dist/ngNote/* $cdir/build/public/
+cp $cdir/ngnote/dist/ngnote/* $cdir/build/public/
 
 echo "Build complete."
 echo "Files are available in: $cdir/build"

@@ -1,0 +1,3 @@
+[submodule "ngnote"]
+	path = ngnote
+	url = git@github.com:lunix33/ngnote
