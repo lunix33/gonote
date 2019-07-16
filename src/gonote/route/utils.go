@@ -2,6 +2,7 @@ package route
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 )
 
 // IsFile allow to find out if the path of a request is a file.
+// `req` is the request object.
+// Returns true if the request path is a file, otherwise false.
 func IsFile(req *http.Request) bool {
 	match, matchErr := regexp.MatchString("[^.]+\\.[^.]+$", req.URL.Path)
 	if matchErr != nil {
@@ -18,9 +21,19 @@ func IsFile(req *http.Request) bool {
 }
 
 // GetParams finds the parameters of a path.
-// The "matcher" is the path pattern used to find the parameters.
-func GetParams(matcher string, req *http.Request) (map[string]string, error) {
-	rtn := make(map[string]string)
+// `matcher` is the path pattern used to find the parameters.
+// `req` is the request object.
+// Returns	(p) The a map with the parameters.
+//			(e) Any error occured.
+func GetParams(matcher string, req *http.Request) (p map[string]string, e error) {
+	defer func() {
+		if r := recover(); r != nil {
+			e = errors.New("unable to get the parameters")
+			p = make(map[string]string)
+		}
+	}()
+
+	p = make(map[string]string)
 
 	reg, err := regexp.Compile(`\{([^{}]+)\}`)
 	if err == nil {
@@ -35,21 +48,33 @@ func GetParams(matcher string, req *http.Request) (map[string]string, error) {
 		if err == nil {
 			matches = reg.FindAllStringSubmatch(req.URL.Path, -1)
 			for i, v := range paramNames {
-				rtn[v] = matches[0][i+1]
+				p[v] = matches[0][i+1]
 			}
 		}
 	}
 
-	return rtn, err
+	return p, err
 }
 
-// GetBody read the body of a request and returns it.
-func GetBody(req *http.Request) ([]byte, error) {
+// GetBody read the body of a request
+// `req` is the request object.
+// Returns	(b) The byte slice representing the request body.
+//			(e) Any error occured.
+func GetBody(req *http.Request) (b []byte, e error) {
+	defer func() {
+		if r := recover(); r != nil {
+			b = make([]byte, 0)
+			e = errors.New("unable to get request body")
+		}
+	}()
+
 	body, err := ioutil.ReadAll(req.Body)
 	return body, err
 }
 
-// GetContentType find the content type of a path.
+// GetContentType find the mimetype of a path.
+// `path` is the path from which the mimetype should be detected.
+// Returns a string with the mimetype representation.
 func GetContentType(path string) string {
 	var reg = regexp.MustCompile(`\.(\w+)$`)
 	match := reg.FindAllStringSubmatch(path, -1)
@@ -84,61 +109,47 @@ type HTTPStatus struct {
 	Error   error
 }
 
-// Cors setup requests to handle CORS request.
-func Cors(next func(http.ResponseWriter, *http.Request)) http.Handler {
-	return http.HandlerFunc(
-		func(rw http.ResponseWriter, req *http.Request) {
-			rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, PATCH, DELETE, OPTIONS")
-			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-			rw.Header().Set("Access-Control-Allow-Origin", "*")
-			if req.Method == http.MethodOptions {
-				rw.Write([]byte(""))
-			} else {
-				next(rw, req)
-			}
-		})
-}
-
-// NotFound return a not found (404) error to the client.
-func NotFound(rw http.ResponseWriter, req *http.Request) {
+// NotFound respond to the client request with a 404 error (not found).
+// `rw` is the object used to respond to the client request.
+func NotFound(rw *http.ResponseWriter) {
 	status := HTTPStatus{
 		Status: HTTPStatusNotFound}
-	WriteResponse(rw, req, status)
+	WriteResponse(rw, status)
 }
 
-// InternalError send through the responseWriter an internal error.
-func InternalError(rw http.ResponseWriter, req *http.Request, err error) {
+// InternalError respond to the client request with a 500 error (internal error).
+func InternalError(rw *http.ResponseWriter, err error) {
 	// Make json error.
 	status := HTTPStatus{
 		Status: HTTPStatusError,
 		Error:  err}
-	WriteResponse(rw, req, status)
+	WriteResponse(rw, status)
 }
 
 // WriteJSON Send to the client a JSON representation of an object.
-func WriteJSON(rw http.ResponseWriter, req *http.Request, obj interface{}) {
+func WriteJSON(rw *http.ResponseWriter, obj interface{}) {
 	status := HTTPStatus{
 		Status:  HTTPStatusOk,
 		Message: obj}
-	WriteResponse(rw, req, status)
+	WriteResponse(rw, status)
 }
 
 // WriteResponse Write the response message to the client.
-func WriteResponse(rw http.ResponseWriter, req *http.Request, status HTTPStatus) {
+func WriteResponse(rw *http.ResponseWriter, status HTTPStatus) {
 	jsonObj, jsonErr := json.Marshal(status)
 	if jsonErr != nil {
 		log.Fatalln("Unable to write response.")
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
+	(*rw).Header().Set("Content-Type", "application/json")
 	switch status.Status {
 	case HTTPStatusNotFound:
-		rw.WriteHeader(http.StatusNotFound)
+		(*rw).WriteHeader(http.StatusNotFound)
 	case HTTPStatusError:
-		rw.WriteHeader(http.StatusInternalServerError)
+		(*rw).WriteHeader(http.StatusInternalServerError)
 	default:
-		rw.WriteHeader(http.StatusOK)
+		(*rw).WriteHeader(http.StatusOK)
 	}
-	rw.Write(jsonObj)
+	(*rw).Write(jsonObj)
 }

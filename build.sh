@@ -18,29 +18,30 @@ echo "*** Installing dependancies ..."
 npm install
 echo "** Building scripts..."
 npx ng build --prod
+echo "* Moving the scripts in the appropriate folder..."
+mkdir -p $cdir/src/gonote/builtin/
+mv $cdir/ngnote/dist/ngnote/* $cdir/src/gonote/builtin/
 
 # Backend.
-echo "**** Building backend..."
+echo "*** Building backend..."
 cd $cdir/src/gonote/
-echo "*** Installing dependancies..."
+echo "** Installing dependancies..."
 go get
-echo "** Compile files..."
+echo "* Compile files..."
 go install
 
-echo "**** Collecting build files..."
+echo "*** Collecting build files..."
 # Cleanup
 if [ -d "$cdir/build" ]; then
-	echo "*** Cleaning up old files..."
+	echo "** Cleaning up old files..."
 	mv $cdir/build/notes.db $cdir
-	rm -fvr $cdir/build/
+	rm -fr $cdir/build/
 fi
-mkdir -p $cdir/build/public/
+mkdir -p $cdir/build/
 mv $cdir/notes.db $cdir/build/
 
-echo "** Copy executable ..."
+echo "* Copy executable ..."
 cp $cdir/bin/gonote.exe $cdir/build/
-echo "* Copy frontend files..."
-cp $cdir/ngnote/dist/ngnote/* $cdir/build/public/
 
 echo "Build complete."
 echo "Files are available in: $cdir/build"
