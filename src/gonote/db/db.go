@@ -12,84 +12,67 @@ import (
 	"strings"
 
 	"github.com/gobuffalo/packr/v2"
-	"github.com/google/uuid"
 )
 
+// Conn is a type alias for sql.DB
+type Conn = sql.DB
+
 var (
-	connections = make(map[string]*sql.DB)
-	dbFile      = util.DirnameJoin("notes.db")
-	box         = packr.New("sql", util.DirnameJoin("db", "sql"))
+	dbFile = util.DirnameJoin("notes.db")
+	box    = packr.New("sql", util.DirnameJoin("db", "sql"))
 )
 
 // Connect create a connection with the database file.
-// Returns	(i) The id of the database.
+// Returns	(c) The database connection.
 //			(e) Any occurred error.
-func Connect() (i string, e error) {
-	dbc, oerr := sql.Open("sqlite3", dbFile)
-	if oerr != nil {
-		return i, oerr
+func Connect() (c *Conn, e error) {
+	c, e = sql.Open("sqlite3", dbFile)
+	if e != nil {
+		return nil, e
 	}
-
-	i = uuid.New().String()
-	connections[i] = dbc
 
 	if _, e = os.Stat(dbFile); os.IsNotExist(e) {
-		initDb(i)
+		initDb(c)
 	}
 
-	return i, nil
+	return c, e
 }
 
 // Close terminate a connection with the database.
-// `id` is the ID of the database connection.
-// Returns an error if any occure.
-func Close(id string) error {
-	var (
-		err error
-		dbc = connections[id]
-	)
-
-	if id == "" {
-		return nil
-	} else if dbc != nil {
-		err = dbc.Close()
-	} else {
-		err = errors.New("no connection with specified id")
+// `c` is the database connection.
+// Returns an error (e) if any occure.
+func Close(c *Conn) (e error) {
+	if c != nil {
+		e = c.Close()
 	}
-
-	return err
+	return
 }
 
 // MustConnect ensure a connection is made with the database before running some actions.
 // `dbID` is a reference to the database ID, if nil a new connection will be created and terminated once the callback is done.
 // `cb` is the callback function.
-func MustConnect(dbID *string, cb func(id string)) {
-	var id string
-	if dbID == nil {
-		cID, cErr := Connect()
-		defer Close(cID)
-		if cErr != nil {
-			panic(cErr)
+func MustConnect(c *Conn, cb func(conn *Conn)) {
+	if c == nil {
+		var err error
+		c, err := Connect()
+		defer Close(c)
+		if err != nil {
+			panic(err)
 		}
-
-		id = cID
-	} else {
-		id = *dbID
 	}
 
-	cb(id)
+	cb(c)
 }
 
 // Run execute a prepared query on a connected database.
-// `id` is the database ID.
+// `dbc` is the database connection.
 // `query` is the query string to be executed.
 // `params` is the list of parameters in the query.
 // `outType` is the type of the objects.
 // Returns	(r) An array of type outType with the query results.
 //			(c) Then the number of rows returned/affected.
 //			(e) Any error occured.
-func Run(id, query string, params []interface{}, outType reflect.Type) (r []interface{}, c int64, e error) {
-	dbc := connections[id]
+func Run(dbc *Conn, query string, params []interface{}, outType reflect.Type) (r []interface{}, c int64, e error) {
 	if dbc != nil {
 		// If the params list is nil, create an empty one.
 		if params == nil {
@@ -104,7 +87,7 @@ func Run(id, query string, params []interface{}, outType reflect.Type) (r []inte
 		return execQuery(dbc, query, params)
 	}
 
-	return r, c, errors.New("no connection with specified id")
+	return r, c, errors.New("no connection to database")
 }
 
 // queryQuery run the query with Query (for SELECT)
@@ -205,12 +188,12 @@ func execQuery(dbc *sql.DB, query string, params []interface{}) (r []interface{}
 
 // initDb initialize the database.
 // `id` is the database ID.
-func initDb(id string) {
+func initDb(c *Conn) {
 	q, err := box.FindString("init.sql")
 	if err != nil {
 		panic(err)
 	}
-	_, _, qerr := Run(id, q, nil, nil)
+	_, _, qerr := Run(c, q, nil, nil)
 
 	if qerr != nil {
 		panic(qerr)
@@ -223,8 +206,8 @@ func initDb(id string) {
 // `version` is the version from which you are starting to migrate.
 // `to` is the target version, if the value of `to` is 0, then run all the migrations.
 // `dbID` is the ID of the database.
-func MigrateFrom(version int64, to int64, dbID *string) {
-	MustConnect(dbID, func(id string) {
+func MigrateFrom(version int64, to int64, co *Conn) {
+	MustConnect(co, func(c *Conn) {
 		// Find the last migration number if `to` is 0.
 		if to == 0 {
 			to = findLastMigration(version)
@@ -241,16 +224,16 @@ func MigrateFrom(version int64, to int64, dbID *string) {
 			}
 
 			// Update query
-			q = "BEGIN TRANSACTION;\n" + q
-			q += `
-				UPDATE Setting
-				SET Value = ?
-				WHERE Setting.Key = "DBVersion";
-				COMMIT;`
+			q = fmt.Sprintf(`BEGIN TRANSACTION;
+%s
+UPDATE Setting
+SET Value = ?
+WHERE Setting.Key = "DBVersion";
+COMMIT;`, q)
 			p := []interface{}{strconv.FormatInt(version, 10)}
 
 			// Run migration file.
-			_, _, qerr := Run(id, q, p, nil)
+			_, _, qerr := Run(c, q, p, nil)
 			if qerr != nil {
 				log.Fatalln(qerr)
 				panic(fmt.Sprintf("migration to db version %d failed.", version))
