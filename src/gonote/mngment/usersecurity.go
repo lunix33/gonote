@@ -3,6 +3,7 @@ package mngment
 import (
 	"gonote/db"
 	"log"
+	"reflect"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,6 +42,19 @@ func (u *User) ComparePassword(p string) bool {
 	return err == nil
 }
 
-func (u *User) GetTokens(c *db.Conn) []*UserToken {
+// GetTokens fetches all the tokens of a specified user.
+// `c` is an optional database connection
+// Returns a list of user token (uts).
+func (u *User) GetTokens(c *db.Conn) (uts []*UserToken) {
+	db.MustConnect(c, func(c *db.Conn) {
+		p := []interface{}{u.ID}
+		rst, _, err := db.Run(c, userGetTokensQuery, p, reflect.TypeOf(UserToken{}))
+		if err == nil {
+			for _, v := range rst {
+				uts = append(uts, v.(*UserToken))
+			}
+		}
+	})
 
+	return uts
 }

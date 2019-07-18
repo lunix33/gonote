@@ -3,7 +3,6 @@ package mngment
 import (
 	"errors"
 	"gonote/db"
-	"log"
 	"reflect"
 	"time"
 
@@ -17,16 +16,9 @@ import (
 // Returns the user token (r) respecting the constraints.
 func Get(t string, u string, c *db.Conn) (r *UserToken) {
 	db.MustConnect(c, func(c *db.Conn) {
-		q := `
-			SELECT * FROM UserToken
-			WHERE Owner = ? AND
-				Token = ?
-			LIMIT 1`
 		p := []interface{}{u, t}
-		rst, _, err := db.Run(c, q, p, reflect.TypeOf(UserToken{}))
-		if err != nil {
-			log.Fatalln(err)
-		} else {
+		rst, _, err := db.Run(c, userTokenGetQuery, p, reflect.TypeOf(UserToken{}))
+		if err == nil {
 			r = rst[0].(*UserToken)
 		}
 	})
@@ -46,7 +38,7 @@ const (
 type UserToken struct {
 	Token    string
 	Type     string
-	Owner    string
+	UserID   string
 	Created  time.Time
 	Expiracy time.Time
 	IP       string
@@ -71,7 +63,7 @@ func (ut *UserToken) Add(c *db.Conn) (e error) {
 
 	// Insert the token in the DB.
 	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{ut.Token, ut.Type, ut.Owner, ut.Expiracy, ut.IP}
+		p := []interface{}{ut.Token, ut.Type, ut.UserID, ut.Expiracy, ut.IP}
 		_, _, e = db.Run(c, userTokenInsertQuery, p, nil)
 	})
 
@@ -90,8 +82,8 @@ func (ut *UserToken) Refresh(c *db.Conn) (e error) {
 	}
 
 	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{ut.Expiracy, ut.IP, ut.Owner, ut.Token}
-		_, _, e := db.Run(c, userTokenRefreshQuery, p, nil)
+		p := []interface{}{ut.Expiracy, ut.IP, ut.UserID, ut.Token}
+		_, _, e = db.Run(c, userTokenRefreshQuery, p, nil)
 	})
 
 	return e
@@ -102,7 +94,7 @@ func (ut *UserToken) Refresh(c *db.Conn) (e error) {
 // Returns any error (e) occured.
 func (ut *UserToken) Delete(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{ut.Owner, ut.Token}
+		p := []interface{}{ut.UserID, ut.Token}
 		_, _, e = db.Run(c, userTokenDeleteQuery, p, nil)
 	})
 	return e
