@@ -3,7 +3,8 @@ package mngment
 const (
 	// UserToken
 	userTokenGetQuery = `
-		SELECT * FROM UserToken
+		SELECT UserToken.*
+		FROM UserToken
 		WHERE UserToken.UserID = ? AND
 			UserToken.Token = ?
 		LIMIT 1`
@@ -29,12 +30,14 @@ const (
 
 	// User
 	userGetTokensQuery = `
-		SELECT * FROM UserToken
+		SELECT UserToken.*
+		FROM UserToken
 		WHERE UserToken.UserID = ?
 		ORDER BY UserToken.Expiracy`
 
 	userGetQuery = `
-		SELECT * FROM User
+		SELECT User.*
+		FROM User
 		WHERE User.Username = ?
 		LIMIT 1`
 
@@ -59,12 +62,14 @@ const (
 
 	// Setting
 	settingGetQuery = `
-		SELECT * FROM Setting
+		SELECT Setting.*
+		FROM Setting
 		WHERE Setting.Key = ?
 		LIMIT 1`
 
 	settingGetAllQuery = `
-		SELECT * FROM Setting
+		SELECT Setting.*
+		FROM Setting
 		ORDER BY Setting.Key`
 
 	settingDeleteQuery = `
@@ -76,4 +81,32 @@ const (
 		INSERT INTO Setting(Key, Value) VALUES (?, ?)
 		ON CONFLICT(Key) DO UPDATE
 		SET Value = ?`
+
+	// Tag
+	tagGetAllQuery = `
+		SELECT DISTINCT Name
+		FROM NoteTag
+		ORDER BY NoteTag.Name`
+
+	tagAddQuery = `
+		INSERT INTO NoteTag(
+			NoteID, Name
+		) VALUES (?, ?)`
+
+	tagGetNotesQuery = `
+		SELECT Note.*
+		FROM Note
+		INNER JOIN (
+			SELECT NoteContent.Updated, NoteContent.NoteID
+			FROM NoteContent
+			ORDER BY NoteContent.Version DESC
+			LIMIT 1
+		) nc ON nc.NoteID = Note.ID
+		WHERE Note.ID = ?
+		ORDER BY nc.Updated DESC`
+
+	tagRemoveQuery = `
+		DELETE FROM NoteTag
+		WHERE NoteTag.NoteID = ? AND
+			NoteTag.Name = ?`
 )
