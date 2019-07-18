@@ -1,7 +1,9 @@
 package mngment
 
 const (
-	// UserToken
+	// ---- UserToken ---------------------------------------------------------
+	// Query to get a specific user's token.
+	// Params: User ID, Token
 	userTokenGetQuery = `
 		SELECT UserToken.*
 		FROM UserToken
@@ -9,6 +11,8 @@ const (
 			UserToken.Token = ?
 		LIMIT 1`
 
+	// Query to add a new token.
+	// Params: Token, Token type, User ID, Expiracy, User's IP
 	userTokenInsertQuery = `
 		INSERT INTO UserToken(
 			Token, Type, UserID, Expiracy, IP
@@ -28,7 +32,7 @@ const (
 			UserToken.Token = ?
 		LIMIT 1`
 
-	// User
+	// ---- User --------------------------------------------------------------
 	userGetTokensQuery = `
 		SELECT UserToken.*
 		FROM UserToken
@@ -60,7 +64,7 @@ const (
 			IsAdmin = ?
 		WHERE User.ID = ?`
 
-	// Setting
+	// ---- Setting -----------------------------------------------------------
 	settingGetQuery = `
 		SELECT Setting.*
 		FROM Setting
@@ -82,7 +86,7 @@ const (
 		ON CONFLICT(Key) DO UPDATE
 		SET Value = ?`
 
-	// Tag
+	// ---- Tag ---------------------------------------------------------------
 	tagGetAllQuery = `
 		SELECT DISTINCT Name
 		FROM NoteTag
@@ -109,4 +113,24 @@ const (
 		DELETE FROM NoteTag
 		WHERE NoteTag.NoteID = ? AND
 			NoteTag.Name = ?`
+
+	// ---- Note --------------------------------------------------------------
+	noteGetQuery = ``
+
+	noteGetAllQuery = ``
+
+	noteAddQuery = ``
+
+	// Query used to delete a note.
+	// Params : Note.ID
+	noteDeleteQuery = `
+		UPDATE Note
+		SET Deleted = 1
+		WHERE Note.ID = ?`
+
+	noteUpdateQuery = ``
+
+	noteGetAllTagsQuery = ``
+
+	// ---- NoteContent -------------------------------------------------------
 )

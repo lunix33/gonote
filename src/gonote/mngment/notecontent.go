@@ -1,4 +1,4 @@
-package notecontent
+package mngment
 
 import "time"
 

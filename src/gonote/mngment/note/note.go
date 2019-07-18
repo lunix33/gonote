@@ -9,8 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const noteFile = "notes.json"
-
 // Note contains the content of a note.
 type Note struct {
 	ID      string
@@ -22,16 +20,15 @@ type Note struct {
 
 // Delete remove the note from the list.
 // dbID is a reference to the database ID, if nil, a new connection will be opened.
-func (n *Note) Delete(dbID *string) (e error) {
-
-	db.MustConnect(dbID, func(id string) {
+func (n *Note) Delete(c *db.Conn) (e error) {
+	db.MustConnect(c, func(c *db.Conn) {
 		// Run delete query.
 		query := `
 			UPDATE Note
 			SET Note.Deleted = 1
 			WHERE Note.ID = ?`
 		params := []interface{}{n.ID}
-		_, _, e = db.Run(id, query, params, nil)
+		_, _, e = db.Run(c, query, params, nil)
 
 		if e != nil {
 			log.Fatalln(e)
