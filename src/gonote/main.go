@@ -51,7 +51,9 @@ func dbSetup(dbVerSet *setting.Setting, c *db.Conn) {
 }
 
 // formatInterfacePort allow to format (or default) the interface and port of the application.
-// `dbID` is the ID of the database.
+// `interfaceSet` is the structure for the interface setting.
+// `portSet` is the structure for the port setting.
+// `c` is the database connection
 // Returns a string with the interface and port on which the application can run.
 func formatInterfacePort(interfaceSet *setting.Setting, portSet *setting.Setting, c *db.Conn) string {
 	// Validate the interface setting.
