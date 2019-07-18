@@ -1,6 +1,7 @@
 package mngment
 
 import (
+	"gonote/db"
 	"log"
 
 	"golang.org/x/crypto/bcrypt"
@@ -38,4 +39,8 @@ func (u *User) ComparePassword(p string) bool {
 	)
 	err = bcrypt.CompareHashAndPassword(cba, pba)
 	return err == nil
+}
+
+func (u *User) GetTokens(c *db.Conn) []*UserToken {
+
 }
