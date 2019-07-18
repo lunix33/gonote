@@ -47,16 +47,16 @@ func GetAllSettings(c *db.Conn) (s map[string]*Setting) {
 }
 
 const (
-	// Port gives the setting key for the application port.
+	// PortSetting gives the setting key for the application port.
 	PortSetting = "Port"
 
-	// DBVersion gives the setting key for the database version.
+	// DBVersionSetting gives the setting key for the database version.
 	DBVersionSetting = "DBVersion"
 
-	// CustomPath gives the setting key for the custom css path.
+	// CustomPathSetting gives the setting key for the custom css path.
 	CustomPathSetting = "CustomPath"
 
-	// Interface gives the setting key for the application interface.
+	// InterfaceSetting gives the setting key for the application interface.
 	InterfaceSetting = "Interface"
 )
 
