@@ -1,22 +1,21 @@
-package setting
+package mngment
 
 import (
 	"gonote/db"
 	"reflect"
 )
 
-// Get retreive the keys
+// GetSetting retreive the keys
 // `key` is the setting key to be fetched.
-func Get(key string, dbID *string) (s *Setting) {
+// `c` is an optional database connection
+// Returns the setting (s) found.
+func GetSetting(key string, c *db.Conn) (s *Setting) {
 	s = new(Setting)
 	s.Key = key
 
-	db.MustConnect(dbID, func(id string) {
-		q := `
-			SELECT * FROM Setting
-			WHERE Setting.Key = ?`
+	db.MustConnect(c, func(c *db.Conn) {
 		params := []interface{}{key}
-		rst, count, err := db.Run(id, q, params, reflect.TypeOf(Setting{}))
+		rst, count, err := db.Run(c, settingGetQuery, params, reflect.TypeOf(Setting{}))
 		if err != nil {
 			s = nil
 		} else if count > 0 {
@@ -28,15 +27,14 @@ func Get(key string, dbID *string) (s *Setting) {
 	return s
 }
 
-// GetAll get all the application settings.
-// `dbID` is the ID of the database.
+// GetAllSettings get all the application settings.
+// `c` is an optional database connection.
 // Returns a map with the setting key as a key and the setting object as a value for all the settings.
-func GetAll(dbID *string) (s map[string]*Setting) {
+func GetAllSettings(c *db.Conn) (s map[string]*Setting) {
 	s = make(map[string]*Setting)
 
-	db.MustConnect(dbID, func(id string) {
-		q := `SELECT * FROM Setting`
-		rst, _, err := db.Run(id, q, nil, reflect.TypeOf(Setting{}))
+	db.MustConnect(c, func(c *db.Conn) {
+		rst, _, err := db.Run(c, settingGetAllQuery, nil, reflect.TypeOf(Setting{}))
 		if err == nil {
 			for _, v := range rst {
 				set := v.(*Setting)
@@ -50,16 +48,16 @@ func GetAll(dbID *string) (s map[string]*Setting) {
 
 const (
 	// Port gives the setting key for the application port.
-	Port = "Port"
+	PortSetting = "Port"
 
 	// DBVersion gives the setting key for the database version.
-	DBVersion = "DBVersion"
+	DBVersionSetting = "DBVersion"
 
 	// CustomPath gives the setting key for the custom css path.
-	CustomPath = "CustomPath"
+	CustomPathSetting = "CustomPath"
 
 	// Interface gives the setting key for the application interface.
-	Interface = "Interface"
+	InterfaceSetting = "Interface"
 )
 
 // Setting represent a key-value pair of setting.
@@ -69,10 +67,13 @@ type Setting struct {
 }
 
 // Set change the value of the setting.
-func (s *Setting) Set(v string, dbID *string) (e error) {
+// `v` is the value of the setting.
+// `c` is an optional database connection
+// Returns any error (e) occured.
+func (s *Setting) Set(v string, c *db.Conn) (e error) {
 	s.Value = v
 
-	db.MustConnect(dbID, func(id string) {
+	db.MustConnect(c, func(c *db.Conn) {
 		var (
 			q string
 			p []interface{}
@@ -80,19 +81,14 @@ func (s *Setting) Set(v string, dbID *string) (e error) {
 
 		if v != "" {
 			// If the value isn't nil, insert the value (or update if already present).
-			q = `
-				INSERT INTO Setting(Key, Value) VALUES (?, ?)
-				ON CONFLICT(Key) DO UPDATE
-				SET Value = ?`
+			q = settingUpsertQuery
 			p = []interface{}{s.Key, s.Value, s.Value}
 		} else {
 			// Or delete the setting key.
-			q = `
-				DELETE FROM Setting
-				WHERE Setting.Key = ?`
+			q = settingDeleteQuery
 			p = []interface{}{s.Key}
 		}
-		_, _, err := db.Run(id, q, p, nil)
+		_, _, err := db.Run(c, q, p, nil)
 		if err != nil {
 			e = err
 		}

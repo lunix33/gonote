@@ -56,4 +56,24 @@ const (
 			Email = ?,
 			IsAdmin = ?
 		WHERE User.ID = ?`
+
+	// Setting
+	settingGetQuery = `
+		SELECT * FROM Setting
+		WHERE Setting.Key = ?
+		LIMIT 1`
+
+	settingGetAllQuery = `
+		SELECT * FROM Setting
+		ORDER BY Setting.Key`
+
+	settingDeleteQuery = `
+		DELETE FROM Setting
+		WHERE Setting.Key = ?
+		LIMIT 1`
+
+	settingUpsertQuery = `
+		INSERT INTO Setting(Key, Value) VALUES (?, ?)
+		ON CONFLICT(Key) DO UPDATE
+		SET Value = ?`
 )
