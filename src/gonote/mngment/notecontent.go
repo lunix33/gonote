@@ -2,6 +2,7 @@ package mngment
 
 import (
 	"gonote/db"
+	"html"
 	"reflect"
 	"time"
 )
@@ -23,11 +24,11 @@ func GetNoteContent(id string, vers string, c *db.Conn) (nc *NoteContent) {
 	return nc
 }
 
-// GetNoteContents gets all the version content of a specific note.
+// GetAllNoteContents gets all the version content of a specific note.
 // `id` is the id of a note.
 // `c` is an optional database connection.
 // Returns a list of all the version of a note.
-func GetNoteContents(id string, c *db.Conn) (ncs []*NoteContent) {
+func GetAllNoteContents(id string, c *db.Conn) (ncs []*NoteContent) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{id}
 		res, _, err := db.Run(c, noteContentGetAllQuery, p, reflect.TypeOf(NoteContent{}))
@@ -58,6 +59,7 @@ func (nc *NoteContent) Add(c *db.Conn) (e error) {
 		// Update the struct fields.
 		nc.Version = (nc.getLastVersionNumber(c) + 1)
 		nc.Updated = time.Now()
+		nc.Content = html.EscapeString(nc.Content)
 
 		// Run the insert.
 		p := []interface{}{nc.NoteID, nc.Version, nc.Content, nc.Updated}
@@ -91,6 +93,7 @@ func (nc *NoteContent) Update(c *db.Conn) (e error) {
 		lstVers := nc.getLastVersionNumber(c)
 		if lstVers == nc.Version {
 			nc.Updated = time.Now()
+			nc.Content = html.EscapeString(nc.Content)
 			p := []interface{}{nc.Content, nc.Updated, nc.NoteID, nc.Version}
 			_, _, e = db.Run(c, noteContentUpdateQuery, p, nil)
 		} else {
@@ -105,10 +108,9 @@ func (nc *NoteContent) Update(c *db.Conn) (e error) {
 // `c` is a database connection.
 // Returns the last version number.
 func (nc *NoteContent) getLastVersionNumber(c *db.Conn) int {
-	nts := GetNoteContents(nc.NoteID, c)
+	nts := GetAllNoteContents(nc.NoteID, c)
 	if len(nts) > 0 {
 		return nts[0].Version
-	} else {
-		return 1
 	}
+	return 1
 }
