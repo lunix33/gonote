@@ -144,4 +144,16 @@ const (
 		INSERT INTO NoteContent (
 			NoteID, Version, Content, Updated
 		) VALUES (?, ?, ?, ?)`
+
+	noteContentDeleteQuery = `
+		DELETE FROM NoteContent
+		WHERE NoteContent.NoteID = ? AND
+			NoteContent.Version = ?`
+
+	noteContentUpdateQuery = `
+		UPDATE NoteContent
+		SET Content = ?,
+			Updated = ?
+		WHERE NoteContent.NoteID = ? AND
+			NoteContent.Version = ?`
 )
