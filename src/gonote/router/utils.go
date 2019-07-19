@@ -1,4 +1,4 @@
-package route
+package router
 
 import (
 	"encoding/json"
@@ -32,8 +32,6 @@ func GetParams(matcher string, req *http.Request) (p map[string]string, e error)
 			p = make(map[string]string)
 		}
 	}()
-
-	p = make(map[string]string)
 
 	reg, err := regexp.Compile(`\{([^{}]+)\}`)
 	if err == nil {
@@ -95,11 +93,23 @@ func GetContentType(path string) string {
 	return "text/plain"
 }
 
+// RouteFn is a type of function made to be handle by the custom router.
+type RouteFn func(*http.ResponseWriter, *http.Request, *Route)
+
+// Route is the definition of a route once it has beed processed by the custom router.
+type Route struct {
+	Matcher string
+	Params  map[string]string
+	Body    []byte
+	Handler RouteFn
+}
+
 // Return code for a message.
 const (
 	HTTPStatusOk       = "ok"
 	HTTPStatusNotFound = "not_found"
 	HTTPStatusError    = "error"
+	HTTPUnauthorized   = "unauth"
 )
 
 // HTTPStatus is the global response message.
@@ -148,6 +158,8 @@ func WriteResponse(rw *http.ResponseWriter, status HTTPStatus) {
 		(*rw).WriteHeader(http.StatusNotFound)
 	case HTTPStatusError:
 		(*rw).WriteHeader(http.StatusInternalServerError)
+	case HTTPUnauthorized:
+		(*rw).WriteHeader(http.StatusUnauthorized)
 	default:
 		(*rw).WriteHeader(http.StatusOK)
 	}

@@ -31,7 +31,7 @@ func Connect() (c *Conn, e error) {
 		return nil, e
 	}
 
-	if _, e = os.Stat(dbFile); os.IsNotExist(e) {
+	if _, s := os.Stat(dbFile); os.IsNotExist(s) {
 		initDb(c)
 	}
 
@@ -54,7 +54,7 @@ func Close(c *Conn) (e error) {
 func MustConnect(c *Conn, cb func(conn *Conn)) {
 	if c == nil {
 		var err error
-		c, err := Connect()
+		c, err = Connect()
 		defer Close(c)
 		if err != nil {
 			panic(err)

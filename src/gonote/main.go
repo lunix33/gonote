@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gonote/db"
 	"gonote/mngment"
-	"gonote/route"
+	"gonote/router"
 	"log"
 	"net/http"
 	"strconv"
@@ -19,12 +19,12 @@ func main() {
 		sets := mngment.GetAllSettings(c)
 
 		dbSetup(sets[mngment.DBVersionSetting], c)
-		listen := formatInterfacePort(
+		listen = formatInterfacePort(
 			sets[mngment.InterfaceSetting], sets[mngment.PortSetting], c)
 	})
 
 	// Register the web routes.
-	route.RegisterRoute()
+	router.RegisterRoute()
 
 	// Start the web server on designated interface and port.
 	log.Printf("Listening on: %s\n", listen)
@@ -34,7 +34,7 @@ func main() {
 // dbSetup ensure the database is properly initialized and up to date
 // `dbVerSet` the setting for the database version.
 // `c` is the database connection.
-func dbSetup(dbVerSet *setting.Setting, c *db.Conn) {
+func dbSetup(dbVerSet *mngment.Setting, c *db.Conn) {
 	// Validate the db version setting.
 	if dbVerSet == nil {
 		panic("unable to validate the application database version")
@@ -55,7 +55,7 @@ func dbSetup(dbVerSet *setting.Setting, c *db.Conn) {
 // `portSet` is the structure for the port setting.
 // `c` is the database connection
 // Returns a string with the interface and port on which the application can run.
-func formatInterfacePort(interfaceSet *setting.Setting, portSet *setting.Setting, c *db.Conn) string {
+func formatInterfacePort(interfaceSet *mngment.Setting, portSet *mngment.Setting, c *db.Conn) string {
 	// Validate the interface setting.
 	if interfaceSet == nil || interfaceSet.Value == "" {
 		interfaceSet = &mngment.Setting{
