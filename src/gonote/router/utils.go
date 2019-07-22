@@ -41,12 +41,18 @@ func GetParams(matcher string, req *http.Request) (p map[string]string, e error)
 			paramNames = append(paramNames, v[1])
 		}
 
-		pathRegexStr := reg.ReplaceAllString(matcher, `([^/]+)`)
+		pathRegexStr := reg.ReplaceAllString(matcher, `([^/]*)`)
 		reg, err = regexp.Compile(pathRegexStr)
 		if err == nil {
 			matches = reg.FindAllStringSubmatch(req.URL.Path, -1)
-			for i, v := range paramNames {
-				p[v] = matches[0][i+1]
+			if len(matches) > 0 {
+				// Makes sure the url was matched.
+				p = make(map[string]string)
+				for i, v := range paramNames {
+					p[v] = matches[0][i+1]
+				}
+			} else {
+				err = errors.New("matcher unable to match url")
 			}
 		}
 	}

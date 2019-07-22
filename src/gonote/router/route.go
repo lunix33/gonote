@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"gonote/util"
+	"log"
 	"net/http"
 	"os"
 
@@ -11,7 +12,7 @@ import (
 
 var (
 	box    = packr.New("builtin", util.DirnameJoin("builtin"))
-	routes map[string]RouteFn
+	routes = make(map[string]RouteFn)
 )
 
 // GlobalHandler is the general request handler.
@@ -34,12 +35,14 @@ func GlobalHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodOptions {
 		rw.Write([]byte(""))
 	} else {
-		route, err := findRoute(req)
-		if err != nil {
+		route := findRoute(req)
+		if route == nil {
 			route = &Route{
 				Handler: serveDefault,
 				Matcher: "/"}
 		}
+
+		log.Printf("%s: %s", req.Method, route.Matcher)
 		route.Handler(&rw, req, route)
 	}
 }
@@ -79,30 +82,35 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 	(*rw).Write(content)
 }
 
-func findRoute(req *http.Request) (r *Route, e error) {
-	r = new(Route)
+func findRoute(req *http.Request) (r *Route) {
+	var (
+		err    error
+		params map[string]string
+	)
 
 	// Find route handler and params.
 	for k, v := range routes {
-		r.Params, e = GetParams(k, req)
-		if e == nil {
-			r.Matcher = k
-			r.Handler = v
+		params, err = GetParams(k, req)
+		if err == nil {
+			r = &Route{
+				Params:  params,
+				Matcher: k,
+				Handler: v}
+
+			if req.Method == http.MethodPatch ||
+				req.Method == http.MethodPost ||
+				req.Method == http.MethodPut {
+				r.Body, err = GetBody(req)
+			}
 			break
 		}
 	}
 
-	// Get request body
-	if e == nil && (req.Method == http.MethodPatch ||
-		req.Method == http.MethodPost ||
-		req.Method == http.MethodPut) {
-		r.Body, e = GetBody(req)
-	}
-
-	return r, e
+	return r
 }
 
 // RegisterRoute register the HTTP routes of the application.
 func RegisterRoute() {
+
 	http.HandleFunc("/", GlobalHandler)
 }
