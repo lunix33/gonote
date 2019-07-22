@@ -56,7 +56,7 @@ func globalHandler(rw http.ResponseWriter, req *http.Request) {
 // "r" is the route detail.
 func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 	var (
-		isf      = IsFile(req)
+		isf      = isFile(req)
 		path     string
 		content  []byte
 		mimetype string
@@ -78,7 +78,7 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 		InternalError(rw, err)
 		return
 	}
-	mimetype = GetContentType(path)
+	mimetype = getContentType(path)
 
 	(*rw).Header().Set("Content-Type", mimetype)
 	(*rw).WriteHeader(http.StatusOK)
@@ -87,6 +87,6 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 // RegisterRoute register the HTTP routes of the application.
 func RegisterRoute() {
-
+	routes["/login"] = securityRteLogin
 	http.HandleFunc("/", globalHandler)
 }

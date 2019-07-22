@@ -27,7 +27,7 @@ func findRoute(req *http.Request) (r *Route) {
 	for k, v := range routes {
 		// For each of the routes, try to get the params
 		// if we can then it's the right route.
-		params, err = GetParams(k, req)
+		params, err = getParams(k, req)
 		if err == nil {
 			r = &Route{
 				Params:  params,
@@ -38,7 +38,7 @@ func findRoute(req *http.Request) (r *Route) {
 			if req.Method == http.MethodPatch ||
 				req.Method == http.MethodPost ||
 				req.Method == http.MethodPut {
-				r.Body, err = GetBody(req)
+				r.Body, err = getBody(req)
 			}
 			break
 		}

@@ -30,6 +30,15 @@ func NotFound(rw *http.ResponseWriter) {
 	WriteResponse(rw, status)
 }
 
+// Unauthorized respond to the client request with a 400 error (unauthorized).
+//
+// "rw is the object used to respond to the client request."
+func Unauthorized(rw *http.ResponseWriter) {
+	status := HTTPStatus{
+		Status: HTTPUnauthorized}
+	WriteResponse(rw, status)
+}
+
 // InternalError respond to the client request with a 500 error (internal error).
 //
 // "rw" is the object used to respond to the client request.

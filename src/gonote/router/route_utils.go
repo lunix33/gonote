@@ -7,12 +7,12 @@ import (
 	"regexp"
 )
 
-// IsFile allow to find out if the path of a request is a file.
+// isFile allow to find out if the path of a request is a file.
 //
 // "req" is the request object.
 //
 // Returns true if the request path is a file, otherwise false.
-func IsFile(req *http.Request) bool {
+func isFile(req *http.Request) bool {
 	match, matchErr := regexp.MatchString("[^.]+\\.[^.]+$", req.URL.Path)
 	if matchErr != nil {
 		return false
@@ -20,7 +20,7 @@ func IsFile(req *http.Request) bool {
 	return match
 }
 
-// GetParams finds the parameters of a path.
+// getParams finds the parameters of a path.
 //
 // "matcher" is the path pattern used to find the parameters.
 // "req" is the request object.
@@ -28,7 +28,7 @@ func IsFile(req *http.Request) bool {
 // Returns:
 // (p) The a map with the parameters.
 // (e) Any error occured.
-func GetParams(matcher string, req *http.Request) (p map[string]string, e error) {
+func getParams(matcher string, req *http.Request) (p map[string]string, e error) {
 	defer func() {
 		if r := recover(); r != nil {
 			e = errors.New("unable to get the parameters")
@@ -63,14 +63,14 @@ func GetParams(matcher string, req *http.Request) (p map[string]string, e error)
 	return p, err
 }
 
-// GetBody read the body of a request
+// getBody read the body of a request
 //
 // `req` is the request object.
 //
 // Returns
 // (b) The byte slice representing the request body.
 // (e) Any error occured.
-func GetBody(req *http.Request) (b []byte, e error) {
+func getBody(req *http.Request) (b []byte, e error) {
 	defer func() {
 		if r := recover(); r != nil {
 			b = make([]byte, 0)
@@ -82,12 +82,12 @@ func GetBody(req *http.Request) (b []byte, e error) {
 	return body, err
 }
 
-// GetContentType find the mimetype of a path.
+// getContentType find the mimetype of a path.
 //
 // `path` is the path from which the mimetype should be detected.
 //
 // Returns a string with the mimetype representation.
-func GetContentType(path string) string {
+func getContentType(path string) string {
 	var reg = regexp.MustCompile(`\.(\w+)$`)
 	match := reg.FindAllStringSubmatch(path, -1)
 	if match != nil {
