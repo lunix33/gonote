@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gobuffalo/packr/v2"
 )
@@ -116,8 +117,13 @@ func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect
 		}
 	}()
 
-	var cols []string
+	var (
+		cols     []string
+		timeKind reflect.Kind
+	)
 	r = make([]interface{}, 0)
+	timeType := reflect.TypeOf(time.Time{})
+	timeKind = timeType.Kind()
 
 	// Run the query
 	rows, queryErr := dbc.Query(query, params...)
@@ -152,7 +158,7 @@ func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect
 		for i, v := range cols {
 			field := reflect.Indirect(o).FieldByName(v)
 			value := *(binder[i].(*interface{}))
-			valueType := reflect.TypeOf(value)
+			valueType := field.Type()
 
 			if valueType.Kind() == reflect.Int {
 				field.SetInt(value.(int64))
@@ -162,6 +168,8 @@ func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect
 				field.SetBool(value.(bool))
 			} else if valueType.Kind() == reflect.Float64 {
 				field.SetFloat(value.(float64))
+			} else if valueType.Kind() == timeKind {
+				field.Set(reflect.ValueOf(value))
 			}
 		}
 		r = append(r, o.Interface())
