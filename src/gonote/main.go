@@ -32,8 +32,9 @@ func main() {
 }
 
 // dbSetup ensure the database is properly initialized and up to date
-// `dbVerSet` the setting for the database version.
-// `c` is the database connection.
+//
+// "dbVerSet" the setting for the database version.
+// "c" is the database connection.
 func dbSetup(dbVerSet *mngment.Setting, c *db.Conn) {
 	// Validate the db version setting.
 	if dbVerSet == nil {
@@ -51,9 +52,11 @@ func dbSetup(dbVerSet *mngment.Setting, c *db.Conn) {
 }
 
 // formatInterfacePort allow to format (or default) the interface and port of the application.
-// `interfaceSet` is the structure for the interface setting.
-// `portSet` is the structure for the port setting.
-// `c` is the database connection
+//
+// "interfaceSet" is the structure for the interface setting.
+// "portSet" is the structure for the port setting.
+// "c" is the database connection
+//
 // Returns a string with the interface and port on which the application can run.
 func formatInterfacePort(interfaceSet *mngment.Setting, portSet *mngment.Setting, c *db.Conn) string {
 	// Validate the interface setting.

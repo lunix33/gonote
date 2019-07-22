@@ -15,10 +15,12 @@ var (
 	routes = make(map[string]RouteFn)
 )
 
-// GlobalHandler is the general request handler.
-// `next` is the specialized function called once this function is done.
+// globalHandler is the general request handler.
+//
+// "next" is the specialized function called once this function is done.
+//
 // Returns a handler function usable by the http lib.
-func GlobalHandler(rw http.ResponseWriter, req *http.Request) {
+func globalHandler(rw http.ResponseWriter, req *http.Request) {
 	// Global error handling.
 	defer func() {
 		if r := recover(); r != nil {
@@ -47,10 +49,11 @@ func GlobalHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// *: *
-// (200) Return the index file.
-// *: *.*
-// (200) Return the requested file in the public folder.
+// serveDefault is the default route handler.
+//
+// "rw" is the response object.
+// "req" is the request object.
+// "r" is the route detail.
 func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 	var (
 		isf      = IsFile(req)
@@ -82,35 +85,8 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 	(*rw).Write(content)
 }
 
-func findRoute(req *http.Request) (r *Route) {
-	var (
-		err    error
-		params map[string]string
-	)
-
-	// Find route handler and params.
-	for k, v := range routes {
-		params, err = GetParams(k, req)
-		if err == nil {
-			r = &Route{
-				Params:  params,
-				Matcher: k,
-				Handler: v}
-
-			if req.Method == http.MethodPatch ||
-				req.Method == http.MethodPost ||
-				req.Method == http.MethodPut {
-				r.Body, err = GetBody(req)
-			}
-			break
-		}
-	}
-
-	return r
-}
-
 // RegisterRoute register the HTTP routes of the application.
 func RegisterRoute() {
 
-	http.HandleFunc("/", GlobalHandler)
+	http.HandleFunc("/", globalHandler)
 }

@@ -23,8 +23,10 @@ var (
 )
 
 // Connect create a connection with the database file.
-// Returns	(c) The database connection.
-//			(e) Any occurred error.
+//
+// Returns
+// (c) The database connection.
+// (e) Any occurred error.
 func Connect() (c *Conn, e error) {
 	c, e = sql.Open("sqlite3", dbFile)
 	if e != nil {
@@ -39,7 +41,9 @@ func Connect() (c *Conn, e error) {
 }
 
 // Close terminate a connection with the database.
-// `c` is the database connection.
+//
+// "c" is the database connection.
+//
 // Returns an error (e) if any occure.
 func Close(c *Conn) (e error) {
 	if c != nil {
@@ -49,8 +53,9 @@ func Close(c *Conn) (e error) {
 }
 
 // MustConnect ensure a connection is made with the database before running some actions.
-// `dbID` is a reference to the database ID, if nil a new connection will be created and terminated once the callback is done.
-// `cb` is the callback function.
+//
+// "c" is an optional database connection. If the connection is nul, then a new connection will be opened and closed once the callback completes.
+// "cb" is the callback function.
 func MustConnect(c *Conn, cb func(conn *Conn)) {
 	if c == nil {
 		var err error
@@ -65,13 +70,16 @@ func MustConnect(c *Conn, cb func(conn *Conn)) {
 }
 
 // Run execute a prepared query on a connected database.
-// `dbc` is the database connection.
-// `query` is the query string to be executed.
-// `params` is the list of parameters in the query.
-// `outType` is the type of the objects.
-// Returns	(r) An array of type outType with the query results.
-//			(c) Then the number of rows returned/affected.
-//			(e) Any error occured.
+//
+// "dbc" is the database connection.
+// "query" is the query string to be executed.
+// "params" is the list of parameters in the query.
+// "outType" is the type of the objects.
+//
+// Returns
+// (r) An array of type outType with the query results.
+// (c) Then the number of rows returned/affected.
+// (e) Any error occured.
 func Run(dbc *Conn, query string, params []interface{}, outType reflect.Type) (r []interface{}, c int64, e error) {
 	if dbc != nil {
 		// If the params list is nil, create an empty one.
@@ -91,13 +99,16 @@ func Run(dbc *Conn, query string, params []interface{}, outType reflect.Type) (r
 }
 
 // queryQuery run the query with Query (for SELECT)
-// `dbc` is the database connection object.
-// `query` is the query string to be executed.
-// `params` is the list of parameters in the query.
-// `outType` is the type of the objects.
-// Returns	(r) An array of `outType` with the results of the query.
-//			(c) The number of rows returned.
-//			(e) Any error occured.
+//
+// "dbc" is the database connection object.
+// "query" is the query string to be executed.
+// "params" is the list of parameters in the query.
+// "outType" is the type of the objects.
+//
+// Returns
+// (r) An array of "outType" with the results of the query.
+// (c) The number of rows returned.
+// (e) Any error occured.
 func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect.Type) (r []interface{}, c int64, e error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -162,12 +173,15 @@ func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect
 }
 
 // execQuery run the query with Exec (for INSERT, UPDATE, DELETE, ...)
-// `dbc` is the database connection object
-// `query` is the query string to be executed.
-// `params` is the list of parameters in the query.
-// Returns	(r) An empty array...
-//			(a) The number of affected rows.
-//			(e) Any error occured.
+//
+// "dbc" is the database connection object
+// "query" is the query string to be executed.
+// "params" is the list of parameters in the query.
+//
+// Returns
+// (r) An empty array...
+// (a) The number of affected rows.
+// (e) Any error occured.
 func execQuery(dbc *sql.DB, query string, params []interface{}) (r []interface{}, a int64, e error) {
 	r = make([]interface{}, 0)
 
@@ -187,7 +201,8 @@ func execQuery(dbc *sql.DB, query string, params []interface{}) (r []interface{}
 }
 
 // initDb initialize the database.
-// `id` is the database ID.
+//
+// "c" is the database connection.
 func initDb(c *Conn) {
 	q, err := box.FindString("init.sql")
 	if err != nil {
@@ -203,9 +218,10 @@ func initDb(c *Conn) {
 }
 
 // MigrateFrom migrate the application database from one version to the latest.
-// `version` is the version from which you are starting to migrate.
-// `to` is the target version, if the value of `to` is 0, then run all the migrations.
-// `dbID` is the ID of the database.
+//
+// "version" is the version from which you are starting to migrate.
+// "to" is the target version, if the value of `to` is 0, then run all the migrations.
+// "co" is the database connection,
 func MigrateFrom(version int64, to int64, co *Conn) {
 	MustConnect(co, func(c *Conn) {
 		// Find the last migration number if `to` is 0.
@@ -245,7 +261,9 @@ COMMIT;`, q)
 }
 
 // findLastMigration tries to find the last available migration.
-// `from` is the version from which we should start looking.
+//
+// "from" is the version from which we should start looking.
+//
 // Returns the last version number found.
 func findLastMigration(from int64) int64 {
 	from++
