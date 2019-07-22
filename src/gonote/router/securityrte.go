@@ -14,6 +14,8 @@ type loginPostData struct {
 	Password string
 }
 
+const securityRteLoginAddr = "/login"
+
 // securityRteLogin reponds to request to the "/login" (POST) route.
 // It logins the user and send back the appropriate login token.
 func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
@@ -54,6 +56,8 @@ func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
 		Unauthorized(rw)
 	})
 }
+
+const securityRteLogoutAddr = "/logout"
 
 // securityRteLogout respond to the "/logout" (GET) route.
 // It logouts the user from the system by deleting the user token.

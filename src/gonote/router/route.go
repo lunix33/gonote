@@ -87,7 +87,10 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 // RegisterRoute register the HTTP routes of the application.
 func RegisterRoute() {
-	routes["/login"] = securityRteLogin
-	routes["/logout"] = securityRteLogout
+	routes[securityRteLoginAddr] = securityRteLogin
+	routes[securityRteLogoutAddr] = securityRteLogout
+	routes[noteRteSearchAddr] = noteRteSearch
+	routes[noteRteAddr] = noteRte
+
 	http.HandleFunc("/", globalHandler)
 }
