@@ -8,10 +8,10 @@ import (
 )
 
 // GetUser get a user from the database.
-// `c` is an optional database connection.
 // `uname` is the username of the user.
+// `c` is an optional database connection.
 // Returns the user (u) found. Will be nil if an error occure or no user is found.
-func GetUser(c *db.Conn, uname string) (u *User) {
+func GetUser(uname string, c *db.Conn) (u *User) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{uname}
 		rst, cnt, err := db.Run(c, userGetQuery, p, reflect.TypeOf(User{}))
