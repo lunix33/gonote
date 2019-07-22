@@ -19,14 +19,12 @@ const (
 			"Expiracy" = ?,
 			"IP" = ?
 		WHERE "UserToken"."UserID" = ? AND
-			"UserToken"."Token" = ?
-		LIMIT 1`
+			"UserToken"."Token" = ?`
 
 	userTokenDeleteQuery = `
 		DELETE FROM "UserToken"
 		WHERE "UserToken"."UserID" = ? AND
-			"UserToken"."Token" = ?
-		LIMIT 1`
+			"UserToken"."Token" = ?`
 
 	// ---- User --------------------------------------------------------------
 	userGetTokensQuery = `
@@ -49,8 +47,7 @@ const (
 	userDeleteQuery = `
 		UPDATE "User" SET
 			"Deleted" = 1
-		WHERE "User"."ID" = ?
-		LIMIT 1`
+		WHERE "User"."ID" = ?`
 
 	userUpdateQuery = `
 		UPDATE "User"
@@ -74,8 +71,7 @@ const (
 
 	settingDeleteQuery = `
 		DELETE FROM "Setting"
-		WHERE "Setting"."Key" = ?
-		LIMIT 1`
+		WHERE "Setting"."Key" = ?`
 
 	settingUpsertQuery = `
 		INSERT INTO "Setting"(
