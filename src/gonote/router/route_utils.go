@@ -1,10 +1,12 @@
 package router
 
 import (
+	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 // isFile allow to find out if the path of a request is a file.
@@ -105,4 +107,22 @@ func getContentType(path string) string {
 	}
 
 	return "text/plain"
+}
+
+func decodeToken(req *http.Request) (u string, t string, e error) {
+	headerValue := req.Header["Authorization"][0]
+	signature := headerValue[6:len(headerValue)]
+	decoded, err := base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		return u, t, err
+	}
+
+	split := strings.Split(string(decoded), ":")
+	if len(split) > 1 {
+		u = split[0]
+		t = split[1]
+		return u, t, nil
+	}
+
+	return u, t, errors.New("unable to get signature information")
 }
