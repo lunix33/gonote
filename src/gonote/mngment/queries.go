@@ -116,18 +116,11 @@ const (
 		WHERE "Note"."ID" = ?
 		LIMIT 1`
 
-	noteSearchQuery = `
+	noteSearchQueryBase = `
 		SELECT DISTINCT("Note"."ID"), "Note"."Title", "Note"."UserID", "Note"."Public", "Note"."Added", "Note"."Deleted"
 		FROM "Note"
 		INNER JOIN "NoteContent" ON "NoteContent"."NoteID" = "Note"."ID"
-		WHERE "Note"."UserID" = ? AND
-			"Note"."Public" = ? AND
-			"Note"."Deleted" = ? AND
-			(
-				"Note"."Title" LIKE ? OR
-				"NoteContent"."Content" LIKE ?
-			)
-		ORDER BY "NoteContent"."Updated"`
+		INNER JOIN "User" ON "User"."ID" = "Note"."UserID"`
 
 	noteAddQuery = `
 		INSERT INTO "Note" (

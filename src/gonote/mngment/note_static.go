@@ -1,9 +1,21 @@
 package mngment
 
 import (
+	"fmt"
 	"gonote/db"
 	"reflect"
+	"strings"
 )
+
+// NoteSearchCriterions are the search criterions for notes.
+type NoteSearchCriterions struct {
+	Username      *string
+	IncludeTrash  *bool
+	OnlyTrash     *bool
+	IncludePublic *bool
+	OnlyPublic    *bool
+	Text          *string
+}
 
 // GetNote retrive a note with a specified id.
 // If the note ain't found, returns nil.
@@ -20,10 +32,11 @@ func GetNote(nID string, c *db.Conn) (n *Note) {
 }
 
 // SearchNotes fetch all the notes from the DB which correspond to criterias.
-func SearchNotes(author string, deleted bool, public bool, search string, c *db.Conn) (sr []*Note) {
+func SearchNotes(crits NoteSearchCriterions, c *db.Conn) (sr []*Note) {
 	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{author, public, deleted, search, search}
-		rst, _, err := db.Run(c, noteSearchQuery, p, reflect.TypeOf(Note{}))
+		where, p := noteBuildWhere(crits)
+		q := fmt.Sprintf(`%s %s ORDER BY "NoteContent"."Updated"`, noteSearchQueryBase, where)
+		rst, _, err := db.Run(c, q, p, reflect.TypeOf(Note{}))
 		if err == nil {
 			for _, v := range rst {
 				sr = append(sr, v.(*Note))
@@ -32,4 +45,48 @@ func SearchNotes(author string, deleted bool, public bool, search string, c *db.
 	})
 
 	return sr
+}
+
+func noteBuildWhere(crits NoteSearchCriterions) (w string, p []interface{}) {
+	w = "WHERE "
+	p = make([]interface{}, 0, 3)
+	clauses := make([]string, 0, 4)
+
+	// User search
+	if crits.Username != nil {
+		// If a user id is supplied.
+		username := fmt.Sprintf("%%%s%%", *crits.Username)
+		p = append(p, username)
+		clauses = append(clauses, `"User"."Username" LIKE ?`)
+	}
+
+	// Trash search
+	if crits.OnlyTrash != nil && *crits.OnlyTrash == true {
+		clauses = append(clauses, `"Note"."Deleted" = 1`)
+	} else if crits.IncludeTrash != nil && *crits.IncludeTrash == true {
+		clauses = append(clauses, `"Note"."Deleted" <= 1`)
+	} else {
+		clauses = append(clauses, `"Note"."Deleted" = 0`)
+	}
+
+	// Public search
+	if crits.OnlyPublic != nil && *crits.OnlyPublic == true {
+		clauses = append(clauses, `"Note"."Public" = 1`)
+	} else if crits.IncludePublic != nil && *crits.IncludePublic == false {
+		clauses = append(clauses, `"Note"."Public" = 0`)
+	}
+
+	// Text search
+	if crits.Text != nil {
+		text := fmt.Sprintf("%%%s%%", *crits.Text)
+		p = append(p, text, text)
+		clauses = append(clauses, `(
+			"Note"."Title" LIKE ? OR
+			"NoteContent"."Content" LIKE ?
+		)`)
+	}
+
+	w += strings.Join(clauses, " AND\n")
+
+	return w, p
 }

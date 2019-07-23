@@ -1,6 +1,11 @@
 package router
 
-import "net/http"
+import (
+	"encoding/json"
+	"gonote/db"
+	"gonote/mngment"
+	"net/http"
+)
 
 const noteRteSearchAddr = "/note/search"
 
@@ -12,6 +17,19 @@ func noteRteSearch(rw *http.ResponseWriter, req *http.Request, r *Route) {
 		return
 	}
 
+	crits := mngment.NoteSearchCriterions{}
+	err := json.Unmarshal(r.Body, &crits)
+	if err != nil {
+		InternalError(rw, err)
+		return
+	}
+
+	notes := make([]*mngment.Note, 0)
+	db.MustConnect(nil, func(c *db.Conn) {
+		notes = mngment.SearchNotes(crits, c)
+	})
+
+	WriteJSON(rw, notes)
 }
 
 const noteRteAddr = "/note/{id}"
