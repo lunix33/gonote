@@ -155,6 +155,8 @@ func Authenticate(req *http.Request, c *db.Conn) (u *mngment.User) {
 
 	db.MustConnect(c, func(c *db.Conn) {
 		ut := mngment.GetUserToken(token, username, c)
+		ut.Refresh(c)
+
 		if ut != nil {
 			u = mngment.GetUserByID(ut.UserID, c)
 		}
