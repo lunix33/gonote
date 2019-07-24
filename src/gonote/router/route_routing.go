@@ -1,6 +1,9 @@
 package router
 
-import "net/http"
+import (
+	"gonote/mngment"
+	"net/http"
+)
 
 // RouteFn is a type of function made to be handle by the custom router.
 type RouteFn func(*http.ResponseWriter, *http.Request, *Route)
@@ -17,6 +20,7 @@ type Route struct {
 	Params  map[string]string
 	Body    []byte
 	Handler RouteFn
+	User    *mngment.User
 }
 
 // findRoute find the route to execute from a list of route.
@@ -38,7 +42,8 @@ func findRoute(req *http.Request) (r *Route) {
 			r = &Route{
 				Params:  params,
 				Matcher: k,
-				Handler: v[req.Method]}
+				Handler: v[req.Method],
+				User:    Authenticate(req, nil)}
 
 			// Get the request body, if proper method.
 			if req.Method == http.MethodPatch ||

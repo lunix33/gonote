@@ -26,12 +26,10 @@ func noteRteSearch(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 	notes := make([]*mngment.Note, 0)
 	db.MustConnect(nil, func(c *db.Conn) {
-		user := Authenticate(req, c)
-
 		// Forcing some search criterions for security reason if ...
 		// The user isn't an admin
 		// And isn't searching for its own notes.
-		if !user.IsAdmin && *crits.Username != user.Username {
+		if !r.User.IsAdmin && *crits.Username != r.User.Username {
 			*crits.Public = "only"
 			crits.Trash = nil
 		}
