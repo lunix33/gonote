@@ -26,6 +26,16 @@ func noteRteSearch(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 	notes := make([]*mngment.Note, 0)
 	db.MustConnect(nil, func(c *db.Conn) {
+		user := Authenticate(req, c)
+
+		// Forcing some search criterions for security reason if ...
+		// The user isn't an admin
+		// And isn't searching for its own notes.
+		if !user.IsAdmin && *crits.Username != user.Username {
+			*crits.Public = "only"
+			crits.Trash = nil
+		}
+
 		notes = mngment.SearchNotes(crits, c)
 	})
 
@@ -34,25 +44,23 @@ func noteRteSearch(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 const noteRteAddr = "/note/{id}"
 
-//
-func noteRte(rw *http.ResponseWriter, req *http.Request, r *Route) {
-	if req.Method == http.MethodGet {
-		noteRteGet(rw, req, r)
-	} else if req.Method == http.MethodConnect {
-		noteRteDelete(rw, req, r)
-	} else if req.Method == http.MethodPut {
-		noteRtePut(rw, req, r)
-	}
+// noteRteHandler is a virtual struct to store the routes functions.
+type noteRteHandler struct{}
+
+// Get respond to the "/note/{id}" (GET) routes.
+// It retreives a note from the database.
+func (noteRteHandler) Get(rw *http.ResponseWriter, req *http.Request, r *Route) {
+
 }
 
-//
-func noteRteGet(rw *http.ResponseWriter, req *http.Request, r *Route) {
+// Delete respond to the "/note/{id}" (DELETE) routes.
+// It trashs or removes a note from the database.
+func (noteRteHandler) Delete(rw *http.ResponseWriter, req *http.Request, r *Route) {
+
 }
 
-//
-func noteRtePut(rw *http.ResponseWriter, req *http.Request, r *Route) {
-}
+// Put respond to the "/note/{id}" (PUT) routes.
+// It updates a note in the database.
+func (noteRteHandler) Put(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
-//
-func noteRteDelete(rw *http.ResponseWriter, req *http.Request, r *Route) {
 }

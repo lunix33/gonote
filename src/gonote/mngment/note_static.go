@@ -9,12 +9,10 @@ import (
 
 // NoteSearchCriterions are the search criterions for notes.
 type NoteSearchCriterions struct {
-	Username      *string
-	IncludeTrash  *bool
-	OnlyTrash     *bool
-	IncludePublic *bool
-	OnlyPublic    *bool
-	Text          *string
+	Username *string
+	Trash    *string
+	Public   *string
+	Text     *string
 }
 
 // GetNote retrive a note with a specified id.
@@ -61,18 +59,18 @@ func noteBuildWhere(crits NoteSearchCriterions) (w string, p []interface{}) {
 	}
 
 	// Trash search
-	if crits.OnlyTrash != nil && *crits.OnlyTrash == true {
+	if crits.Trash != nil && *crits.Trash == "only" {
 		clauses = append(clauses, `"Note"."Deleted" = 1`)
-	} else if crits.IncludeTrash != nil && *crits.IncludeTrash == true {
+	} else if crits.Trash != nil && *crits.Trash == "include" {
 		clauses = append(clauses, `"Note"."Deleted" <= 1`)
 	} else {
 		clauses = append(clauses, `"Note"."Deleted" = 0`)
 	}
 
 	// Public search
-	if crits.OnlyPublic != nil && *crits.OnlyPublic == true {
+	if crits.Public != nil && *crits.Public == "only" {
 		clauses = append(clauses, `"Note"."Public" = 1`)
-	} else if crits.IncludePublic != nil && *crits.IncludePublic == false {
+	} else if crits.Public != nil && *crits.Public == "exclude" {
 		clauses = append(clauses, `"Note"."Public" = 0`)
 	}
 

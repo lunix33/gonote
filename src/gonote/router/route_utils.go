@@ -3,6 +3,8 @@ package router
 import (
 	"encoding/base64"
 	"errors"
+	"gonote/db"
+	"gonote/mngment"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -67,7 +69,7 @@ func getParams(matcher string, req *http.Request) (p map[string]string, e error)
 
 // getBody read the body of a request
 //
-// `req` is the request object.
+// "req" is the request object.
 //
 // Returns
 // (b) The byte slice representing the request body.
@@ -86,7 +88,7 @@ func getBody(req *http.Request) (b []byte, e error) {
 
 // getContentType find the mimetype of a path.
 //
-// `path` is the path from which the mimetype should be detected.
+// "path" is the path from which the mimetype should be detected.
 //
 // Returns a string with the mimetype representation.
 func getContentType(path string) string {
@@ -109,7 +111,19 @@ func getContentType(path string) string {
 	return "text/plain"
 }
 
+// decodeToken decodes the authentication token sent in a request header.
+//
+// "req" is the request object.
+//
+// Returns
+// (u) The username.
+// (t) The user token.
+// (e) Any error occured.
 func decodeToken(req *http.Request) (u string, t string, e error) {
+	if req.Header["Authorization"] == nil {
+		return u, t, errors.New("no authorization header")
+	}
+
 	headerValue := req.Header["Authorization"][0]
 	signature := headerValue[6:len(headerValue)]
 	decoded, err := base64.StdEncoding.DecodeString(signature)
@@ -125,4 +139,26 @@ func decodeToken(req *http.Request) (u string, t string, e error) {
 	}
 
 	return u, t, errors.New("unable to get signature information")
+}
+
+// Authenticate gets the user sending the request.
+//
+// "req" is the request object.
+// "c" is an optional database connection.
+//
+// Returns the user (u) logged in.
+func Authenticate(req *http.Request, c *db.Conn) (u *mngment.User) {
+	username, token, err := decodeToken(req)
+	if err != nil {
+		return
+	}
+
+	db.MustConnect(c, func(c *db.Conn) {
+		ut := mngment.GetUserToken(token, username, c)
+		if ut != nil {
+			u = mngment.GetUserByID(ut.UserID, c)
+		}
+	})
+
+	return
 }

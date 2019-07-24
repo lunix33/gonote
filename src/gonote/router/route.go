@@ -12,7 +12,7 @@ import (
 
 var (
 	box    = packr.New("builtin", util.DirnameJoin("builtin"))
-	routes = make(map[string]RouteFn)
+	routes = make(RouteList)
 )
 
 // globalHandler is the general request handler.
@@ -42,6 +42,9 @@ func globalHandler(rw http.ResponseWriter, req *http.Request) {
 			route = &Route{
 				Handler: serveDefault,
 				Matcher: "/"}
+		} else if route.Handler == nil {
+			NotFound(&rw)
+			return
 		}
 
 		log.Printf("%s: %s", req.Method, route.Matcher)
@@ -87,10 +90,18 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 // RegisterRoute register the HTTP routes of the application.
 func RegisterRoute() {
-	routes[securityRteLoginAddr] = securityRteLogin
-	routes[securityRteLogoutAddr] = securityRteLogout
-	routes[noteRteSearchAddr] = noteRteSearch
-	routes[noteRteAddr] = noteRte
+	// Initialize route handlers (routes with multiple methods.)
+	noteRte := noteRteHandler{}
 
+	// Route registration
+	routes[securityRteLoginAddr] = MethodHandler{http.MethodPost: securityRteLogin}
+	routes[securityRteLogoutAddr] = MethodHandler{http.MethodGet: securityRteLogout}
+	routes[noteRteSearchAddr] = MethodHandler{http.MethodPost: noteRteSearch}
+	routes[noteRteAddr] = MethodHandler{
+		http.MethodGet:    noteRte.Get,
+		http.MethodDelete: noteRte.Delete,
+		http.MethodPut:    noteRte.Put}
+
+	// Register the router with the http server.
 	http.HandleFunc("/", globalHandler)
 }

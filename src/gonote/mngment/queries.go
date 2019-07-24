@@ -39,6 +39,12 @@ const (
 		WHERE "User"."Username" = ?
 		LIMIT 1`
 
+	userGetByIDQuery = `
+		SELECT "User".*
+		FROM "User"
+		WHERE "User"."ID" = ?
+		LIMIT 1`
+
 	userAddQuery = `
 		INSERT INTO "User" (
 			"ID", "Username", "Password", "Email", "IsAdmin"

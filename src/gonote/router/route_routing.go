@@ -5,6 +5,12 @@ import "net/http"
 // RouteFn is a type of function made to be handle by the custom router.
 type RouteFn func(*http.ResponseWriter, *http.Request, *Route)
 
+// RouteList is a list of routes with their MethodHandler.
+type RouteList map[string]MethodHandler
+
+// MethodHandler is a key-value association between the HTTP method and the route function.
+type MethodHandler map[string]RouteFn
+
 // Route is the definition of a route once it has beed processed by the custom router.
 type Route struct {
 	Matcher string
@@ -32,7 +38,7 @@ func findRoute(req *http.Request) (r *Route) {
 			r = &Route{
 				Params:  params,
 				Matcher: k,
-				Handler: v}
+				Handler: v[req.Method]}
 
 			// Get the request body, if proper method.
 			if req.Method == http.MethodPatch ||
