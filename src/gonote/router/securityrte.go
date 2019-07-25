@@ -14,6 +14,11 @@ type loginPostData struct {
 	Password string
 }
 
+type loginPostReturn struct {
+	User  *mngment.User
+	Token *mngment.UserToken
+}
+
 const securityRteLoginAddr = "/login"
 
 // securityRteLogin reponds to request to the "/login" (POST) route.
@@ -48,7 +53,10 @@ func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 			// Login successful
 			log.Printf("-> Login %s (%s)", user.Username, tok.IP)
-			WriteJSON(rw, tok)
+			rtn := loginPostReturn{
+				User:  user,
+				Token: &tok}
+			WriteJSON(rw, rtn)
 			return
 		}
 
@@ -67,12 +75,11 @@ func securityRteLogout(rw *http.ResponseWriter, req *http.Request, r *Route) {
 		return
 	}
 
-	username, token, err := decodeToken(req)
+	uid, token, err := decodeToken(req)
 	if err == nil {
 		db.MustConnect(nil, func(c *db.Conn) {
 			// Get the token from the database.
-			user := mngment.GetUser(username, c)
-			tok := mngment.GetUserToken(token, user.ID, c)
+			tok := mngment.GetUserToken(token, uid, c)
 
 			if tok != nil {
 				// Delete the token.

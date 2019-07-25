@@ -116,7 +116,7 @@ func getContentType(path string) string {
 // "req" is the request object.
 //
 // Returns
-// (u) The username.
+// (u) The user id.
 // (t) The user token.
 // (e) Any error occured.
 func decodeToken(req *http.Request) (u string, t string, e error) {
@@ -124,21 +124,26 @@ func decodeToken(req *http.Request) (u string, t string, e error) {
 		return u, t, errors.New("no authorization header")
 	}
 
+	// format of Authorization header:
+	// Authorization: Token <base64(UserID:Token)>
 	headerValue := req.Header["Authorization"][0]
-	signature := headerValue[6:len(headerValue)]
-	decoded, err := base64.StdEncoding.DecodeString(signature)
-	if err != nil {
-		return u, t, err
+	auth := strings.Split(headerValue, " ")
+	if len(auth) == 2 && auth[0] == "Token" {
+		signature := auth[1]
+		decoded, err := base64.StdEncoding.DecodeString(signature)
+		if err != nil {
+			return u, t, err
+		}
+
+		split := strings.Split(string(decoded), ":")
+		if len(split) > 1 {
+			u = split[0]
+			t = split[1]
+			return u, t, nil
+		}
 	}
 
-	split := strings.Split(string(decoded), ":")
-	if len(split) > 1 {
-		u = split[0]
-		t = split[1]
-		return u, t, nil
-	}
-
-	return u, t, errors.New("unable to get signature information")
+	return u, t, errors.New("unable to get signature information or invalid authentication method")
 }
 
 // Authenticate gets the user sending the request.
@@ -148,13 +153,13 @@ func decodeToken(req *http.Request) (u string, t string, e error) {
 //
 // Returns the user (u) logged in.
 func Authenticate(req *http.Request, c *db.Conn) (u *mngment.User) {
-	username, token, err := decodeToken(req)
+	uid, token, err := decodeToken(req)
 	if err != nil {
 		return
 	}
 
 	db.MustConnect(c, func(c *db.Conn) {
-		ut := mngment.GetUserToken(token, username, c)
+		ut := mngment.GetUserToken(token, uid, c)
 		ut.Refresh(c)
 
 		if ut != nil {
