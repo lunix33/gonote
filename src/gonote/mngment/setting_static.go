@@ -58,4 +58,6 @@ const (
 
 	// InterfaceSetting gives the setting key for the application interface.
 	InterfaceSetting = "Interface"
+
+	SiteTitleSetting = "SiteTitle"
 )

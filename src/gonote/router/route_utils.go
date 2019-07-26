@@ -2,13 +2,15 @@ package router
 
 import (
 	"encoding/base64"
-	"errors"
 	"gonote/db"
 	"gonote/mngment"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // isFile allow to find out if the path of a request is a file.
@@ -34,8 +36,8 @@ func isFile(req *http.Request) bool {
 // (e) Any error occured.
 func getParams(matcher string, req *http.Request) (p map[string]string, e error) {
 	defer func() {
-		if r := recover(); r != nil {
-			e = errors.New("unable to get the parameters")
+		if r := recover().(error); r != nil {
+			e = errors.Wrap(r, "error while parsing the parameters")
 			p = make(map[string]string)
 		}
 	}()
@@ -64,7 +66,7 @@ func getParams(matcher string, req *http.Request) (p map[string]string, e error)
 		}
 	}
 
-	return p, err
+	return p, errors.Wrap(err, "unable to parse request parameters")
 }
 
 // getBody read the body of a request
@@ -76,13 +78,14 @@ func getParams(matcher string, req *http.Request) (p map[string]string, e error)
 // (e) Any error occured.
 func getBody(req *http.Request) (b []byte, e error) {
 	defer func() {
-		if r := recover(); r != nil {
+		if r := recover().(error); r != nil {
 			b = make([]byte, 0)
-			e = errors.New("unable to get request body")
+			e = errors.Wrap(r, "unable to get request body")
 		}
 	}()
 
 	body, err := ioutil.ReadAll(req.Body)
+	err = errors.Wrap(err, "unable to read the body of the request")
 	return body, err
 }
 
@@ -132,7 +135,7 @@ func decodeToken(req *http.Request) (u string, t string, e error) {
 		signature := auth[1]
 		decoded, err := base64.StdEncoding.DecodeString(signature)
 		if err != nil {
-			return u, t, err
+			return u, t, errors.Wrap(err, "unable to decode authorization header")
 		}
 
 		split := strings.Split(string(decoded), ":")
@@ -160,9 +163,12 @@ func Authenticate(req *http.Request, c *db.Conn) (u *mngment.User) {
 
 	db.MustConnect(c, func(c *db.Conn) {
 		ut := mngment.GetUserToken(token, uid, c)
-		ut.Refresh(c)
 
 		if ut != nil {
+			err = errors.Wrapf(ut.Refresh(c), "unable to refresh user token %s", ut.Token)
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 			u = mngment.GetUserByID(ut.UserID, c)
 		}
 	})

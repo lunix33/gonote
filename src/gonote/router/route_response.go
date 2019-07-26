@@ -2,6 +2,8 @@ package router
 
 import (
 	"encoding/json"
+	"fmt"
+	"gonote/mngment"
 	"log"
 	"net/http"
 )
@@ -18,7 +20,14 @@ const (
 type HTTPStatus struct {
 	Status  string
 	Message interface{}
-	Error   error
+	Error   HTTPStatusResponseError
+}
+
+// HTTPStatusResponseError is the error message emitted to the client.
+type HTTPStatusResponseError struct {
+	Message  string `json:"message"`
+	Stack    string `json:"stack"`
+	Friendly string `json:"friendly"`
 }
 
 // NotFound respond to the client request with a 404 error (not found).
@@ -43,11 +52,23 @@ func Unauthorized(rw *http.ResponseWriter) {
 //
 // "rw" is the object used to respond to the client request.
 // "err" is an error object to send with the response.
-func InternalError(rw *http.ResponseWriter, err error) {
+// "friendly" is an alternative error message made for regular users.
+// "usr" is the user logged in.
+func InternalError(rw *http.ResponseWriter, err error, friendly string, usr *mngment.User) {
 	// Make json error.
 	status := HTTPStatus{
-		Status: HTTPStatusError,
-		Error:  err}
+		Status: HTTPStatusError}
+
+	// Add the error object based on the user logged in.
+	if usr.IsAdmin {
+		status.Error = HTTPStatusResponseError{
+			Message: fmt.Sprintf("%v", err),
+			Stack:   fmt.Sprintf("%+v", err)}
+	} else {
+		status.Error = HTTPStatusResponseError{
+			Friendly: friendly}
+	}
+
 	WriteResponse(rw, status)
 }
 

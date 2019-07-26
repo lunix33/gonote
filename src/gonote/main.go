@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pkg/errors"
 )
 
 func main() {
@@ -38,13 +39,13 @@ func main() {
 func dbSetup(dbVerSet *mngment.Setting, c *db.Conn) {
 	// Validate the db version setting.
 	if dbVerSet == nil {
-		panic("unable to validate the application database version")
+		panic(errors.New("unable to validate the application database version"))
 	}
 
 	// Convert the version to workable number.
 	dbVersion, convErr := strconv.ParseInt(dbVerSet.Value, 10, 0)
 	if convErr != nil {
-		panic("unable to parse the database version")
+		panic(errors.Wrap(convErr, "unable to parse the database version"))
 	}
 
 	// Apply migration.

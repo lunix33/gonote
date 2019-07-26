@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type loginPostData struct {
@@ -19,7 +21,7 @@ type loginPostReturn struct {
 	Token *mngment.UserToken
 }
 
-const securityRteLoginAddr = "/login"
+const securityRteLoginAddr = "^/login$"
 
 // securityRteLogin reponds to request to the "/login" (POST) route.
 // It logins the user and send back the appropriate login token.
@@ -30,9 +32,8 @@ func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
 	}
 
 	postData := loginPostData{}
-	err := json.Unmarshal(r.Body, &postData)
-	if err != nil {
-		InternalError(rw, err)
+	if err := errors.Wrap(json.Unmarshal(r.Body, &postData), "unable to parse request body"); err != nil {
+		InternalError(rw, err, "We weren't able to get your login credentials correctly.", r.User)
 		return
 	}
 
@@ -45,9 +46,8 @@ func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
 			tok := mngment.UserToken{
 				UserID: user.ID,
 				IP:     ipSlice[0]}
-			err = tok.Add(c)
-			if err != nil {
-				InternalError(rw, err)
+			if err := errors.Wrap(tok.Add(c), "unable to add user token"); err != nil {
+				InternalError(rw, err, "We weren't able to create your user session.", r.User)
 				return
 			}
 
@@ -65,7 +65,7 @@ func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
 	})
 }
 
-const securityRteLogoutAddr = "/logout"
+const securityRteLogoutAddr = "^/logout$"
 
 // securityRteLogout respond to the "/logout" (GET) route.
 // It logouts the user from the system by deleting the user token.
@@ -83,9 +83,8 @@ func securityRteLogout(rw *http.ResponseWriter, req *http.Request, r *Route) {
 
 			if tok != nil {
 				// Delete the token.
-				err = tok.Delete(c)
-				if err != nil {
-					InternalError(rw, err)
+				if err = errors.Wrapf(tok.Delete(c), "unable to delete user token %s", tok.Token); err != nil {
+					InternalError(rw, err, "We weren't able to delete your session.", r.User)
 					return
 				}
 
@@ -98,4 +97,5 @@ func securityRteLogout(rw *http.ResponseWriter, req *http.Request, r *Route) {
 			NotFound(rw)
 		})
 	}
+	InternalError(rw, errors.New("unable to decode request token"), "We weren't able to delete your session.", r.User)
 }

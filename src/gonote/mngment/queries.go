@@ -155,6 +155,12 @@ const (
 		FROM "NoteTag"
 		WHERE "NoteTag"."NoteID" = ?`
 
+	noteGetNoteContentQuery = `
+			SELECT *
+			FROM "NoteContent"
+			WHERE "NoteContent"."NoteID" = ?
+			ORDER BY "NoteContent"."Version" DESC`
+
 	// ---- NoteContent -------------------------------------------------------
 	noteContentGetQuery = `
 		SELECT *

@@ -13,6 +13,9 @@ type NoteSearchCriterions struct {
 	Trash    *string
 	Public   *string
 	Text     *string
+	Order    *string
+	Limit    *int
+	Offset   *int
 }
 
 // GetNote retrive a note with a specified id.
@@ -32,8 +35,44 @@ func GetNote(nID string, c *db.Conn) (n *Note) {
 // SearchNotes fetch all the notes from the DB which correspond to criterias.
 func SearchNotes(crits NoteSearchCriterions, c *db.Conn) (sr []*Note) {
 	db.MustConnect(c, func(c *db.Conn) {
+		// Build WHERE
 		where, p := noteBuildWhere(crits)
-		q := fmt.Sprintf(`%s %s ORDER BY "NoteContent"."Updated"`, noteSearchQueryBase, where)
+
+		// Order
+		if crits.Order != nil {
+			var field string
+			switch *crits.Order {
+			case "updated":
+				field = `"NoteContent"."Updated"`
+			case "added":
+				field = `"Note"."Added"`
+			case "version":
+				field = `"NoteContent"."Version"`
+			case "user":
+				field = `"User"."Username"`
+			default:
+				field = ""
+			}
+
+			if field != "" {
+				where += "\nORDER BY " + field
+			}
+		}
+
+		// Limit
+		if crits.Limit != nil {
+			p = append(p, crits.Limit)
+			where += "\nLIMIT ?"
+		}
+
+		// Offset
+		if crits.Offset != nil {
+			p = append(p, crits.Offset)
+			where += "\nOFFSET ?"
+		}
+
+		// Run query
+		q := fmt.Sprintf(`%s %s`, noteSearchQueryBase, where)
 		rst, _, err := db.Run(c, q, p, reflect.TypeOf(Note{}))
 		if err == nil {
 			for _, v := range rst {

@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"gonote/util"
 	"log"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/packr/v2"
+	"github.com/pkg/errors"
 )
 
 // Conn is a type alias for sql.DB
@@ -29,16 +29,15 @@ var (
 // (c) The database connection.
 // (e) Any occurred error.
 func Connect() (c *Conn, e error) {
-	c, e = sql.Open("sqlite3", dbFile)
-	if e != nil {
-		return nil, e
+	if c, e = sql.Open("sqlite3", dbFile); e != nil {
+		return nil, errors.Wrap(e, "unable to connect to SQLite database")
 	}
 
 	if _, s := os.Stat(dbFile); os.IsNotExist(s) {
 		initDb(c)
 	}
 
-	return c, e
+	return c, errors.Wrap(e, "generic SQL error during connection")
 }
 
 // Close terminate a connection with the database.
@@ -48,7 +47,7 @@ func Connect() (c *Conn, e error) {
 // Returns an error (e) if any occure.
 func Close(c *Conn) (e error) {
 	if c != nil {
-		e = c.Close()
+		e = errors.Wrap(c.Close(), "unable to close SQL connection")
 	}
 	return
 }
@@ -63,6 +62,7 @@ func MustConnect(c *Conn, cb func(conn *Conn)) {
 		c, err = Connect()
 		defer Close(c)
 		if err != nil {
+			err = errors.Wrap(err, "unable to open required SQL connection")
 			panic(err)
 		}
 	}
@@ -112,8 +112,8 @@ func Run(dbc *Conn, query string, params []interface{}, outType reflect.Type) (r
 // (e) Any error occured.
 func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect.Type) (r []interface{}, c int64, e error) {
 	defer func() {
-		if r := recover(); r != nil {
-			e = errors.New("unable to build request result")
+		if r := recover().(error); r != nil {
+			e = errors.Wrap(r, "unable to build request result")
 		}
 	}()
 
@@ -128,6 +128,7 @@ func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect
 	// Run the query
 	rows, queryErr := dbc.Query(query, params...)
 	if queryErr != nil {
+		queryErr = errors.Wrapf(queryErr, "error in query:\n%s\nWith parameters:\n%v", query, params)
 		return nil, 0, queryErr
 	}
 
@@ -138,7 +139,7 @@ func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect
 		if cols == nil {
 			colsRow, errCol := rows.Columns()
 			if errCol != nil {
-				return nil, c, errCol
+				return nil, c, errors.Wrap(errCol, "error while fetching columns name")
 			}
 			cols = colsRow
 		}
@@ -150,7 +151,7 @@ func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect
 		}
 		scanErr := rows.Scan(binder...)
 		if scanErr != nil {
-			return nil, c, scanErr
+			return nil, c, errors.Wrapf(scanErr, "unable to bind results to variable (cols len: %d, binder len: %d)", len(cols), len(binder))
 		}
 
 		// Build the output struct.
@@ -196,13 +197,13 @@ func execQuery(dbc *sql.DB, query string, params []interface{}) (r []interface{}
 	// Run the query
 	res, queryErr := dbc.Exec(query, params...)
 	if queryErr != nil {
-		return nil, 0, queryErr
+		return nil, 0, errors.Wrapf(queryErr, "error in query:\n%s\nWith parameters:\n%v", query, params)
 	}
 
 	// Get the number of affected rows.
 	affectedRow, affErr := res.RowsAffected()
 	if affErr != nil {
-		return nil, 0, affErr
+		return nil, 0, errors.Wrap(affErr, "unable to get query's affected row count")
 	}
 
 	return r, affectedRow, nil
@@ -214,12 +215,12 @@ func execQuery(dbc *sql.DB, query string, params []interface{}) (r []interface{}
 func initDb(c *Conn) {
 	q, err := box.FindString("init.sql")
 	if err != nil {
-		panic(err)
+		panic(errors.Wrap(err, "unable to get init.sql file content"))
 	}
 	_, _, qerr := Run(c, q, nil, nil)
 
 	if qerr != nil {
-		panic(qerr)
+		panic(errors.Wrap(qerr, "error while executing the db initialization script"))
 	} else {
 		log.Println("Database properly initiated.")
 	}
@@ -244,7 +245,7 @@ func MigrateFrom(version int64, to int64, co *Conn) {
 			// Get the content of the migration file
 			q, err := box.FindString(filename)
 			if err != nil {
-				panic(err)
+				panic(errors.Wrapf(err, "unable to get %s file content", filename))
 			}
 
 			// Update query
@@ -260,7 +261,7 @@ COMMIT;`, q)
 			_, _, qerr := Run(c, q, p, nil)
 			if qerr != nil {
 				log.Fatalln(qerr)
-				panic(fmt.Sprintf("migration to db version %d failed.", version))
+				panic(errors.Wrapf(qerr, "migration to db version %d failed.", version))
 			} else {
 				log.Printf("Migration to db version %d successful.", version)
 			}

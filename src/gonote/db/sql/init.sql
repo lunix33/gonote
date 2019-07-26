@@ -72,6 +72,7 @@ INSERT INTO "Setting"(
 	( 	"DBVersion", 	"1" ),
 	( 	"CustomPath", 	"custom" ),
 	( 	"Port", 		"8080" ),
-	( 	"Interface", 	"localhost" );
+	( 	"Interface", 	"localhost" ),
+	(	"SiteTitle",	"goNote" );
 
 COMMIT;

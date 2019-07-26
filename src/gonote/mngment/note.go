@@ -85,3 +85,24 @@ func (n *Note) GetTags(c *db.Conn) (t []*Tag) {
 
 	return t
 }
+
+// GetNoteContent gets all the contents of the note.
+//
+// "c" is an optional database connection.
+//
+// Returns a list of note content (nc) associated with the note.
+func (n *Note) GetNoteContent(c *db.Conn) (nc []*NoteContent) {
+	nc = make([]*NoteContent, 0)
+
+	db.MustConnect(c, func(c *db.Conn) {
+		p := []interface{}{n.ID}
+		rst, _, err := db.Run(c, noteGetNoteContentQuery, p, reflect.TypeOf(NoteContent{}))
+		if err == nil {
+			for _, v := range rst {
+				nc = append(nc, v.(*NoteContent))
+			}
+		}
+	})
+
+	return nc
+}

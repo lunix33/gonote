@@ -5,9 +5,16 @@ import (
 	"gonote/db"
 	"gonote/mngment"
 	"net/http"
+	"time"
 )
 
-const noteRteSearchAddr = "/note/search"
+const noteRteSearchAddr = "^/note/search$"
+
+type noteRteSearchResponse struct {
+	Note       *mngment.Note
+	LastUpdate time.Time
+	Author     string
+}
 
 // noteRteGet respond to the "/note/search" (POST) route.
 // It gets all the notes which respect the search filters.
@@ -20,27 +27,38 @@ func noteRteSearch(rw *http.ResponseWriter, req *http.Request, r *Route) {
 	crits := mngment.NoteSearchCriterions{}
 	err := json.Unmarshal(r.Body, &crits)
 	if err != nil {
-		InternalError(rw, err)
+		InternalError(rw, err, "We were unable to decifer your search criterions.", r.User)
 		return
 	}
 
 	notes := make([]*mngment.Note, 0)
+	rtn := make([]*noteRteSearchResponse, 0)
 	db.MustConnect(nil, func(c *db.Conn) {
 		// Forcing some search criterions for security reason if ...
 		// The user isn't an admin
 		// And isn't searching for its own notes.
-		if !r.User.IsAdmin && *crits.Username != r.User.Username {
+		if r.User == nil || (!r.User.IsAdmin && *crits.Username != r.User.Username) {
 			*crits.Public = "only"
 			crits.Trash = nil
 		}
 
 		notes = mngment.SearchNotes(crits, c)
+
+		for _, v := range notes {
+			user := mngment.GetUserByID(v.UserID, c)
+			contents := v.GetNoteContent(c)
+			ro := &noteRteSearchResponse{
+				Note:       v,
+				LastUpdate: (*contents[0]).Updated,
+				Author:     user.Username}
+			rtn = append(rtn, ro)
+		}
 	})
 
-	WriteJSON(rw, notes)
+	WriteJSON(rw, rtn)
 }
 
-const noteRteAddr = "/note/{id}"
+const noteRteAddr = "^/note/{id}"
 
 // noteRteHandler is a virtual struct to store the routes functions.
 type noteRteHandler struct{}
