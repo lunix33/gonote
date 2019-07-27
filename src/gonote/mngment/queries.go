@@ -11,12 +11,12 @@ const (
 
 	userTokenInsertQuery = `
 		INSERT INTO "UserToken" (
-			"Token", "Type", "UserID", "Expiracy", "IP"
+			"Token", "Type", "UserID", "Expiry", "IP"
 		) VALUES (?, ?, ?, ?, ?)`
 
 	userTokenRefreshQuery = `
 		UPDATE "UserToken" SET
-			"Expiracy" = ?,
+			"Expiry" = ?,
 			"IP" = ?
 		WHERE "UserToken"."UserID" = ? AND
 			"UserToken"."Token" = ?`
@@ -31,7 +31,7 @@ const (
 		SELECT "UserToken".*
 		FROM "UserToken"
 		WHERE "UserToken"."UserID" = ?
-		ORDER BY "UserToken"."Expiracy"`
+		ORDER BY "UserToken"."Expiry"`
 
 	userGetQuery = `
 		SELECT "User".*

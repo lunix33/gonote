@@ -2,42 +2,10 @@ package mngment
 
 import (
 	"gonote/db"
-	"reflect"
+	"html"
 
 	"github.com/google/uuid"
 )
-
-// GetUser get a user from the database.
-// `uname` is the username of the user.
-// `c` is an optional database connection.
-// Returns the user (u) found. Will be nil if an error occure or no user is found.
-func GetUser(uname string, c *db.Conn) (u *User) {
-	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{uname}
-		rst, cnt, err := db.Run(c, userGetQuery, p, reflect.TypeOf(User{}))
-		if err == nil && cnt > 0 {
-			u = rst[0].(*User)
-		}
-	})
-
-	return u
-}
-
-// GetUserByID get a user from the database by the id.
-// `id` is the user id.
-// `c` is an optional database connection.
-// Returns the user (u) found. Will be nil if an error occure or no user is found.
-func GetUserByID(id string, c *db.Conn) (u *User) {
-	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{id}
-		rst, cnt, err := db.Run(c, userGetByIDQuery, p, reflect.TypeOf(User{}))
-		if err == nil && cnt > 0 {
-			u = rst[0].(*User)
-		}
-	})
-
-	return u
-}
 
 // User represent a user of the platform.
 type User struct {
@@ -53,12 +21,10 @@ type User struct {
 // `c` is an optional database connection.
 // Returns any error (e) occured.
 func (u *User) Add(c *db.Conn) (e error) {
-	// If the password was set, encode it.
-	if u.Password != "" {
-		u.SetPassword(u.Password)
-	}
-
 	u.ID = uuid.New().String()
+	u.Username = html.EscapeString(u.Username)
+	u.SetPassword(u.Password)
+	u.Email = html.EscapeString(u.Email)
 	u.Deleted = false
 
 	db.MustConnect(c, func(c *db.Conn) {
@@ -74,6 +40,10 @@ func (u *User) Add(c *db.Conn) (e error) {
 // `uu` is the user with the update information
 // Returns any error (e) occured.
 func (u *User) Update(uu *User, c *db.Conn) (e error) {
+	if uu.Username != "" {
+		u.Username = html.EscapeString(uu.Username)
+	}
+
 	// Update password if not empty
 	if uu.Password != "" {
 		u.SetPassword(uu.Password)
@@ -81,11 +51,7 @@ func (u *User) Update(uu *User, c *db.Conn) (e error) {
 
 	// Update email if not empty
 	if uu.Email != "" {
-		u.Email = uu.Email
-	}
-
-	if uu.Username != "" {
-		u.Username = uu.Username
+		u.Email = html.EscapeString(uu.Email)
 	}
 
 	u.IsAdmin = uu.IsAdmin

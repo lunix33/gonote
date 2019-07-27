@@ -38,12 +38,12 @@ const (
 
 // UserToken represents the login token of a user.
 type UserToken struct {
-	Token    string
-	Type     string
-	UserID   string
-	Created  time.Time
-	Expiracy time.Time
-	IP       string
+	Token   string
+	Type    string
+	UserID  string
+	Created time.Time
+	Expiry  time.Time
+	IP      string
 }
 
 // Add adds a new token into the database.
@@ -56,7 +56,7 @@ func (ut *UserToken) Add(c *db.Conn) (e error) {
 	}
 	ut.Token = uuid.New().String()
 	ut.Created = time.Now()
-	ut.setExpiracy()
+	ut.setExpiry()
 
 	// IP must be set.
 	if ut.IP == "" {
@@ -65,18 +65,18 @@ func (ut *UserToken) Add(c *db.Conn) (e error) {
 
 	// Insert the token in the DB.
 	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{ut.Token, ut.Type, ut.UserID, ut.Expiracy, ut.IP}
+		p := []interface{}{ut.Token, ut.Type, ut.UserID, ut.Expiry, ut.IP}
 		_, _, e = db.Run(c, userTokenInsertQuery, p, nil)
 	})
 
 	return e
 }
 
-// Refresh update the token expiracy to be sure it doesn't expire.
+// Refresh update the token Expiry to be sure it doesn't expire.
 // `c` is an optional database connection.
 // Returns any error (e) occured.
 func (ut *UserToken) Refresh(c *db.Conn) (e error) {
-	ut.setExpiracy()
+	ut.setExpiry()
 
 	// IP must be set.
 	if ut.IP == "" {
@@ -84,7 +84,7 @@ func (ut *UserToken) Refresh(c *db.Conn) (e error) {
 	}
 
 	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{ut.Expiracy, ut.IP, ut.UserID, ut.Token}
+		p := []interface{}{ut.Expiry, ut.IP, ut.UserID, ut.Token}
 		_, _, e = db.Run(c, userTokenRefreshQuery, p, nil)
 	})
 
@@ -108,7 +108,7 @@ func (ut *UserToken) Delete(c *db.Conn) (e error) {
 // Returns wether or not a token is valid (v).
 func (ut *UserToken) Validate(c *db.Conn) (v bool) {
 	now := time.Now()
-	if now.Before(ut.Expiracy) {
+	if now.Before(ut.Expiry) {
 		v = true
 
 		// Remove One time token
@@ -124,11 +124,11 @@ func (ut *UserToken) Validate(c *db.Conn) (v bool) {
 	return v
 }
 
-// setExpiracy sets the token's expiracy based on the token type.
-func (ut *UserToken) setExpiracy() {
+// setExpiry sets the token's Expiry based on the token type.
+func (ut *UserToken) setExpiry() {
 	exp := time.Now()
 
-	// Set expiracy based on token type.
+	// Set Expiry based on token type.
 	if ut.Type == PasswordResetToken {
 		// One day later.
 		exp = exp.AddDate(0, 0, 1)
@@ -137,5 +137,5 @@ func (ut *UserToken) setExpiracy() {
 		exp = exp.AddDate(0, 0, 14)
 	}
 
-	ut.Expiracy = exp
+	ut.Expiry = exp
 }

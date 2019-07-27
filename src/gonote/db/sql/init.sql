@@ -5,12 +5,11 @@ CREATE TABLE "User" (
 	"ID"		TEXT	NOT NULL,
 	"Username"	TEXT	NOT NULL,
 	"Password"	TEXT	NOT NULL,
-	"Email"		TEXT,
+	"Email"		TEXT	NOT NULL	DEFAULT "no-mail@domain",
 	"Deleted"	BOOLEAN	NOT NULL	DEFAULT 0,
 	"IsAdmin"	BOOLEAN NOT NULL	DEFAULT 0,
 	PRIMARY KEY("ID"),
-	UNIQUE("Username"),
-	UNIQUE("Email")
+	UNIQUE("Username")
 );
 
 CREATE TABLE "UserToken" (
@@ -18,7 +17,7 @@ CREATE TABLE "UserToken" (
 	"Type"		TEXT		NOT NULL,
 	"UserID"	TEXT		NOT NULL,
 	"Created"	DATETIME	NOT NULL	DEFAULT (datetime()),
-	"Expiracy"	DATETIME	NOT NULL,
+	"Expiry"	DATETIME	NOT NULL,
 	"IP"		TEXT		NOT NULL,
 	PRIMARY KEY("Token"),
 	FOREIGN KEY("UserID") REFERENCES "User"("ID") ON DELETE CASCADE 
@@ -30,7 +29,7 @@ CREATE TABLE "Note" (
 	"UserID"	TEXT		NOT NULL,
 	"Public"	BOOLEAN		NOT NULL	DEFAULT 0,
 	"Added"		DATETIME				DEFAULT (datetime()),
-	"Deleted"	BOOLEAN					DEFAULT 0,
+	"Deleted"	INTEGER					DEFAULT 0,
 	PRIMARY KEY("ID"),
 	FOREIGN KEY("UserID") REFERENCES "User"("ID") ON DELETE CASCADE
 );
