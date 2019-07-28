@@ -3,10 +3,12 @@ package mngment
 import (
 	"gonote/db"
 	"html"
+	"log"
 	"reflect"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
 
 // Note contains the content of a note.
@@ -20,11 +22,17 @@ type Note struct {
 }
 
 // Delete trash or delete a note from the database.
+// Struct required field: ID.
 //
 // "c" is an optional database connection.
 //
 // Returns any error (e) occured.
 func (n *Note) Delete(c *db.Conn) (e error) {
+	if n.ID == "" {
+		e = errors.New("missing field to be able to delete the note")
+		return
+	}
+
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{n.ID}
 		if !n.Deleted {
@@ -38,19 +46,29 @@ func (n *Note) Delete(c *db.Conn) (e error) {
 }
 
 // Add adds a note into the database.
+// Struct required field: Title, UserID, Public.
 //
 // "c" is an optional database connection.
 //
 // Returns any error (e) occured.
 func (n *Note) Add(c *db.Conn) (e error) {
+	if n.UserID == "" {
+		e = errors.New("missing field to be able to add the note")
+		return
+	}
+
 	// Generate Object
 	n.ID = uuid.New().String()
 	n.Title = html.EscapeString(n.Title)
 	n.Added = time.Now()
+	n.Deleted = false
 
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{n.ID, n.Title, n.UserID, n.Public}
 		_, _, e = db.Run(c, noteAddQuery, p, nil)
+		if e != nil {
+			e = errors.Wrap(e, "unable to add the note")
+		}
 	})
 
 	return e
@@ -63,6 +81,11 @@ func (n *Note) Add(c *db.Conn) (e error) {
 //
 // Returns any error (e) occurred.
 func (n *Note) Update(n2 *Note, c *db.Conn) (e error) {
+	if n.ID == "" {
+		e = errors.New("missing field to be able to update the note")
+		return
+	}
+
 	// Update the object.
 	n.Title = html.EscapeString(n2.Title)
 	n.Public = n2.Public
@@ -70,6 +93,9 @@ func (n *Note) Update(n2 *Note, c *db.Conn) (e error) {
 	db.MustConnect(c, func(id *db.Conn) {
 		p := []interface{}{n.Title, n.Public, n.ID}
 		_, _, e = db.Run(id, noteUpdateQuery, p, nil)
+		if e != nil {
+			e = errors.Wrap(e, "unable to update note")
+		}
 	})
 
 	return e
@@ -88,6 +114,8 @@ func (n *Note) GetTags(c *db.Conn) (t []*Tag) {
 			for _, v := range rst {
 				t = append(t, v.(*Tag))
 			}
+		} else {
+			log.Fatalln(err)
 		}
 	})
 
@@ -100,8 +128,6 @@ func (n *Note) GetTags(c *db.Conn) (t []*Tag) {
 //
 // Returns a list of note content (nc) associated with the note.
 func (n *Note) GetNoteContent(c *db.Conn) (nc []*NoteContent) {
-	nc = make([]*NoteContent, 0)
-
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{n.ID}
 		rst, _, err := db.Run(c, noteGetNoteContentQuery, p, reflect.TypeOf(NoteContent{}))
@@ -109,6 +135,8 @@ func (n *Note) GetNoteContent(c *db.Conn) (nc []*NoteContent) {
 			for _, v := range rst {
 				nc = append(nc, v.(*NoteContent))
 			}
+		} else {
+			log.Fatalln(err)
 		}
 	})
 

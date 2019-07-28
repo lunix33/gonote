@@ -3,6 +3,7 @@ package mngment
 import (
 	"fmt"
 	"gonote/db"
+	"log"
 	"reflect"
 	"strings"
 )
@@ -30,6 +31,8 @@ func GetNote(nID string, c *db.Conn) (n *Note) {
 		rst, cnt, err := db.Run(c, noteGetQuery, p, reflect.TypeOf(Note{}))
 		if err == nil && cnt > 0 {
 			n = rst[0].(*Note)
+		} else if err != nil {
+			log.Fatalln(err)
 		}
 	})
 
@@ -87,6 +90,8 @@ func SearchNotes(crits NoteSearchCriterions, c *db.Conn) (sr []*Note) {
 			for _, v := range rst {
 				sr = append(sr, v.(*Note))
 			}
+		} else {
+			log.Fatalln(err)
 		}
 	})
 
