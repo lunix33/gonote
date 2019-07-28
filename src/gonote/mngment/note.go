@@ -20,7 +20,9 @@ type Note struct {
 }
 
 // Delete trash or delete a note from the database.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (n *Note) Delete(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
@@ -36,7 +38,9 @@ func (n *Note) Delete(c *db.Conn) (e error) {
 }
 
 // Add adds a note into the database.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (n *Note) Add(c *db.Conn) (e error) {
 	// Generate Object
@@ -53,8 +57,10 @@ func (n *Note) Add(c *db.Conn) (e error) {
 }
 
 // Update change the content and save to file.
-// `n2` is the update document.
-// `c` is an optional database connection.
+//
+// "n2" is the update document.
+// "c" is an optional database connection.
+//
 // Returns any error (e) occurred.
 func (n *Note) Update(n2 *Note, c *db.Conn) (e error) {
 	// Update the object.
@@ -62,7 +68,7 @@ func (n *Note) Update(n2 *Note, c *db.Conn) (e error) {
 	n.Public = n2.Public
 
 	db.MustConnect(c, func(id *db.Conn) {
-		p := []interface{}{n.Title, n.Added, n.Public, n.ID}
+		p := []interface{}{n.Title, n.Public, n.ID}
 		_, _, e = db.Run(id, noteUpdateQuery, p, nil)
 	})
 
@@ -70,7 +76,9 @@ func (n *Note) Update(n2 *Note, c *db.Conn) (e error) {
 }
 
 // GetTags gets the tags associated with the note.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns the list of tags (t) associated with the note.
 func (n *Note) GetTags(c *db.Conn) (t []*Tag) {
 	db.MustConnect(c, func(c *db.Conn) {

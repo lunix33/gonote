@@ -19,7 +19,11 @@ type NoteSearchCriterions struct {
 }
 
 // GetNote retrive a note with a specified id.
-// If the note ain't found, returns nil.
+//
+// "nID" is the ID of the note.
+// "c" is an optional database connection.
+//
+// Returns the note (n) with the specified ID, or nil.
 func GetNote(nID string, c *db.Conn) (n *Note) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{nID}
@@ -33,6 +37,11 @@ func GetNote(nID string, c *db.Conn) (n *Note) {
 }
 
 // SearchNotes fetch all the notes from the DB which correspond to criterias.
+//
+// "crits" are the search criterions.
+// "c" is an optional database connection
+//
+// Returns all the notes (sr) which correspond to the search criterions.
 func SearchNotes(crits NoteSearchCriterions, c *db.Conn) (sr []*Note) {
 	db.MustConnect(c, func(c *db.Conn) {
 		// Build WHERE
@@ -84,6 +93,13 @@ func SearchNotes(crits NoteSearchCriterions, c *db.Conn) (sr []*Note) {
 	return sr
 }
 
+// noteBuildWhere allow to build there where statement for the SearchNotes query.
+//
+// "crits" are the search criterions
+//
+// Returns:
+// (w) The where statement.
+// (p) The parameters associated with the statement.
 func noteBuildWhere(crits NoteSearchCriterions) (w string, p []interface{}) {
 	w = "WHERE "
 	p = make([]interface{}, 0, 3)

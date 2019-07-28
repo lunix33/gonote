@@ -146,7 +146,6 @@ const (
 	noteUpdateQuery = `
 		UPDATE "Note" SET
 			"Title" = ?,
-			"Added" = ?,
 			"Public" = ?
 		WHERE "Note"."ID" = ?`
 
