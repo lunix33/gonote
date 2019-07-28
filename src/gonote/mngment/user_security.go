@@ -2,9 +2,10 @@ package mngment
 
 import (
 	"gonote/db"
-	"log"
+	"gonote/util"
 	"reflect"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,14 +24,16 @@ func (u *User) SetPassword(p string) {
 	pba := []byte(p)
 	c, cerr := bcrypt.GenerateFromPassword(pba, bcrypt.DefaultCost)
 	if cerr != nil {
-		log.Fatalln("Unable to encrypt the password.")
+		util.LogErr(errors.New("unable to encrypt the password"))
 		return
 	}
 	u.Password = string(c)
 }
 
 // ComparePassword compare an encrypted password with a pain-text password.
-// `p`: is the user's password in plain-text.
+//
+// "p" is the user's password in plain-text.
+//
 // Returns true if the password are a match, otherwise false.
 func (u *User) ComparePassword(p string) bool {
 	var (

@@ -2,6 +2,8 @@ package mngment
 
 import (
 	"gonote/db"
+
+	"github.com/pkg/errors"
 )
 
 // Setting represent a key-value pair of setting.
@@ -11,8 +13,10 @@ type Setting struct {
 }
 
 // Set change the value of the setting.
-// `v` is the value of the setting.
-// `c` is an optional database connection
+//
+// "v" is the value of the setting.
+// "c" is an optional database connection
+//
 // Returns any error (e) occured.
 func (s *Setting) Set(v string, c *db.Conn) (e error) {
 	s.Value = v
@@ -34,7 +38,7 @@ func (s *Setting) Set(v string, c *db.Conn) (e error) {
 		}
 		_, _, err := db.Run(c, q, p, nil)
 		if err != nil {
-			e = err
+			e = errors.Wrap(err, "unable to set the setting key")
 		}
 	})
 

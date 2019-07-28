@@ -2,12 +2,15 @@ package mngment
 
 import (
 	"gonote/db"
+	"gonote/util"
 	"reflect"
 )
 
-// GetSetting retreive the keys
-// `key` is the setting key to be fetched.
-// `c` is an optional database connection
+// GetSetting retreive the keys.
+//
+// "key" is the setting key to be fetched.
+// "c" is an optional database connection.
+//
 // Returns the setting (s) found.
 func GetSetting(key string, c *db.Conn) (s *Setting) {
 	s = new(Setting)
@@ -18,6 +21,7 @@ func GetSetting(key string, c *db.Conn) (s *Setting) {
 		rst, count, err := db.Run(c, settingGetQuery, params, reflect.TypeOf(Setting{}))
 		if err != nil {
 			s = nil
+			util.LogErr(err)
 		} else if count > 0 {
 			rsetting := rst[0].(*Setting)
 			s = rsetting
@@ -28,8 +32,10 @@ func GetSetting(key string, c *db.Conn) (s *Setting) {
 }
 
 // GetAllSettings get all the application settings.
-// `c` is an optional database connection.
-// Returns a map with the setting key as a key and the setting object as a value for all the settings.
+//
+// "c" is an optional database connection.
+//
+// Returns a map with the setting (s) key as a key and the setting object as a value for all the settings.
 func GetAllSettings(c *db.Conn) (s map[string]*Setting) {
 	s = make(map[string]*Setting)
 
@@ -40,6 +46,8 @@ func GetAllSettings(c *db.Conn) (s map[string]*Setting) {
 				set := v.(*Setting)
 				s[set.Key] = set
 			}
+		} else {
+			util.LogErr(err)
 		}
 	})
 

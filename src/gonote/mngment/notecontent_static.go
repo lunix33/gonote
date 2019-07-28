@@ -2,7 +2,7 @@ package mngment
 
 import (
 	"gonote/db"
-	"log"
+	"gonote/util"
 	"reflect"
 )
 
@@ -20,7 +20,7 @@ func GetNoteContent(id string, vers string, c *db.Conn) (nc *NoteContent) {
 		if err == nil && cnt > 0 {
 			nc = rst[0].(*NoteContent)
 		} else if err != nil {
-			log.Fatalln(err)
+			util.LogErr(err)
 		}
 	})
 
@@ -42,7 +42,7 @@ func GetAllNoteContents(id string, c *db.Conn) (ncs []*NoteContent) {
 				ncs = append(ncs, v.(*NoteContent))
 			}
 		} else {
-			log.Fatalln(err)
+			util.LogErr(err)
 		}
 	})
 

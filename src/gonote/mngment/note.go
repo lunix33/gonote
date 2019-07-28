@@ -2,8 +2,8 @@ package mngment
 
 import (
 	"gonote/db"
+	"gonote/util"
 	"html"
-	"log"
 	"reflect"
 	"time"
 
@@ -115,7 +115,7 @@ func (n *Note) GetTags(c *db.Conn) (t []*Tag) {
 				t = append(t, v.(*Tag))
 			}
 		} else {
-			log.Fatalln(err)
+			util.LogErr(err)
 		}
 	})
 
@@ -136,7 +136,7 @@ func (n *Note) GetNoteContent(c *db.Conn) (nc []*NoteContent) {
 				nc = append(nc, v.(*NoteContent))
 			}
 		} else {
-			log.Fatalln(err)
+			util.LogErr(err)
 		}
 	})
 

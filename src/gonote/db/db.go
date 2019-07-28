@@ -260,7 +260,7 @@ COMMIT;`, q)
 			// Run migration file.
 			_, _, qerr := Run(c, q, p, nil)
 			if qerr != nil {
-				log.Fatalln(qerr)
+				util.LogErr(qerr)
 				panic(errors.Wrapf(qerr, "migration to db version %d failed.", version))
 			} else {
 				log.Printf("Migration to db version %d successful.", version)

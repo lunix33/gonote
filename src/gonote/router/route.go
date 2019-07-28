@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"gonote/mngment"
 	"gonote/util"
 	"log"
 	"net/http"
@@ -21,10 +22,16 @@ var (
 //
 // Returns a handler function usable by the http lib.
 func globalHandler(rw http.ResponseWriter, req *http.Request) {
+	var route *Route
+
 	// Global error handling.
 	defer func() {
-		if r := recover(); r != nil {
-			InternalError(&rw, fmt.Errorf("%v", r))
+		if r := recover().(error); r != nil {
+			var u *mngment.User
+			if route != nil {
+				u = route.User
+			}
+			InternalError(&rw, r, "An error occured and makes us unable to continue.", u)
 		}
 	}()
 
@@ -37,7 +44,7 @@ func globalHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodOptions {
 		rw.Write([]byte(""))
 	} else {
-		route := findRoute(req)
+		route = findRoute(req)
 		if route == nil {
 			route = &Route{
 				Handler: serveDefault,
@@ -78,7 +85,7 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 		NotFound(rw)
 		return
 	} else if err != nil {
-		InternalError(rw, err)
+		InternalError(rw, err, "An error occured while trying to get the requested resource.", r.User)
 		return
 	}
 	mimetype = getContentType(path)

@@ -5,6 +5,7 @@ import (
 	"gonote/db"
 	"gonote/mngment"
 	"gonote/router"
+	"gonote/util"
 	"log"
 	"net/http"
 	"strconv"
@@ -29,7 +30,7 @@ func main() {
 
 	// Start the web server on designated interface and port.
 	log.Printf("Listening on: %s\n", listen)
-	log.Fatal(http.ListenAndServe(listen, nil))
+	util.LogErr(http.ListenAndServe(listen, nil))
 }
 
 // dbSetup ensure the database is properly initialized and up to date

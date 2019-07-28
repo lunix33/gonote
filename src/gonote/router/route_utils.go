@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"gonote/db"
 	"gonote/mngment"
+	"gonote/util"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -167,7 +167,7 @@ func Authenticate(req *http.Request, c *db.Conn) (u *mngment.User) {
 		if ut != nil {
 			err = errors.Wrapf(ut.Refresh(c), "unable to refresh user token %s", ut.Token)
 			if err != nil {
-				log.Fatalf("%+v", err)
+				util.LogErr(err)
 			}
 			u = mngment.GetUserByID(ut.UserID, c)
 		}

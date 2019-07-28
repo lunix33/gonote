@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"gonote/mngment"
-	"log"
+	"gonote/util"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 // Return code for a message.
@@ -90,7 +92,7 @@ func WriteJSON(rw *http.ResponseWriter, obj interface{}) {
 func WriteResponse(rw *http.ResponseWriter, status HTTPStatus) {
 	jsonObj, jsonErr := json.Marshal(status)
 	if jsonErr != nil {
-		log.Fatalln("Unable to write response.")
+		util.LogErr(errors.New("unable to write response"))
 		return
 	}
 
