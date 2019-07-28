@@ -2,24 +2,9 @@ package mngment
 
 import (
 	"gonote/db"
-	"reflect"
+
+	"github.com/pkg/errors"
 )
-
-// GetAllTags gets a list of all the available tags.
-// `c` is an optional database connection.
-// Returns a list of tags (t).
-func GetAllTags(c *db.Conn) (t []*Tag) {
-	db.MustConnect(c, func(c *db.Conn) {
-		tags, _, err := db.Run(c, tagGetAllQuery, nil, reflect.TypeOf(Tag{}))
-		if err == nil {
-			for _, v := range tags {
-				t = append(t, v.(*Tag))
-			}
-		}
-	})
-
-	return t
-}
 
 // Tag represent a Note category tag.
 type Tag struct {
@@ -28,24 +13,34 @@ type Tag struct {
 }
 
 // Add adds a new tag.
-// `dbID` is the database ID.
+//
+// "c" is the database ID.
+//
 // Returns any error occured.
 func (t *Tag) Add(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{t.NoteID, t.Name}
 		_, _, e = db.Run(c, tagAddQuery, p, nil)
+		if e != nil {
+			e = errors.Wrapf(e, "unable to add tag \"%s\" to note %s", t.Name, t.NoteID)
+		}
 	})
 
 	return e
 }
 
 // Remove removes the tag association from the database.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (t *Tag) Remove(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{t.NoteID, t.Name}
 		_, _, e = db.Run(c, tagRemoveQuery, p, nil)
+		if e != nil {
+			e = errors.Wrapf(e, "unable to remove tag \"%s\" from note %s", t.Name, t.NoteID)
+		}
 	})
 
 	return e
