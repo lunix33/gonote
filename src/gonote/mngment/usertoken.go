@@ -1,32 +1,13 @@
 package mngment
 
 import (
-	"errors"
 	"gonote/db"
-	"reflect"
+	"gonote/util"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
-
-// GetUserToken fetch in the database the token associated with a specified user.
-//
-// `t` is the token string.
-// `u` is the user id of the user owning the token.
-// `c` is an optional database connection.
-//
-// Returns the user token (r) respecting the constraints.
-func GetUserToken(t string, u string, c *db.Conn) (r *UserToken) {
-	db.MustConnect(c, func(c *db.Conn) {
-		p := []interface{}{u, t}
-		rst, cnt, err := db.Run(c, userTokenGetQuery, p, reflect.TypeOf(UserToken{}))
-		if err == nil && cnt > 0 {
-			r = rst[0].(*UserToken)
-		}
-	})
-
-	return r
-}
 
 const (
 	// LoginToken is a type of token made for user login.
@@ -47,7 +28,9 @@ type UserToken struct {
 }
 
 // Add adds a new token into the database.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (ut *UserToken) Add(c *db.Conn) (e error) {
 	// Set default values of a Token.
@@ -67,15 +50,25 @@ func (ut *UserToken) Add(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{ut.Token, ut.Type, ut.UserID, ut.Expiry, ut.IP}
 		_, _, e = db.Run(c, userTokenInsertQuery, p, nil)
+		if e != nil {
+			e = errors.Wrapf(e, "unable to create a new token for user %s", ut.UserID)
+		}
 	})
 
 	return e
 }
 
 // Refresh update the token Expiry to be sure it doesn't expire.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (ut *UserToken) Refresh(c *db.Conn) (e error) {
+	// PasswordResetToken can't be refreshed.
+	if ut.Type == PasswordResetToken {
+		return nil
+	}
+
 	ut.setExpiry()
 
 	// IP must be set.
@@ -83,42 +76,60 @@ func (ut *UserToken) Refresh(c *db.Conn) (e error) {
 		return errors.New("the IP of the client must be set")
 	}
 
+	// Update the token with a new IP and a new expiration.
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{ut.Expiry, ut.IP, ut.UserID, ut.Token}
 		_, _, e = db.Run(c, userTokenRefreshQuery, p, nil)
+		if e != nil {
+			e = errors.Wrapf(e, "unable to refresh token %s", ut.Token)
+		}
 	})
 
 	return e
 }
 
 // Delete remove the token from the database.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (ut *UserToken) Delete(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{ut.UserID, ut.Token}
 		_, _, e = db.Run(c, userTokenDeleteQuery, p, nil)
+		if e != nil {
+			e = errors.Wrapf(e, "unable to delete the token %s", ut.Token)
+		}
 	})
 	return e
 }
 
 // Validate verify if a token is still valid.
 // It also delete invalid tokens and one-time tokens (when used)
-// `c` is an optional database connection
+//
+// "c" is an optional database connection
+//
 // Returns wether or not a token is valid (v).
 func (ut *UserToken) Validate(c *db.Conn) (v bool) {
-	now := time.Now()
+	var (
+		now = time.Now()
+		err error
+	)
 	if now.Before(ut.Expiry) {
 		v = true
 
 		// Remove One time token
 		if ut.Type == PasswordResetToken {
-			ut.Delete(c)
+			err = ut.Delete(c)
 		}
 	} else {
 		// Token is expired.
 		v = false
-		ut.Delete(c)
+		err = ut.Delete(c)
+	}
+
+	if err != nil {
+		util.LogErr(errors.Wrapf(err, "an error occurred while trying to remove an invalid token (%s)", ut.Token))
 	}
 
 	return v

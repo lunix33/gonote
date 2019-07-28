@@ -5,6 +5,7 @@ import (
 	"html"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
 
 // User represent a user of the platform.
@@ -18,7 +19,9 @@ type User struct {
 }
 
 // Add adds a user.
-// `c` is an optional database connection.
+//
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (u *User) Add(c *db.Conn) (e error) {
 	u.ID = uuid.New().String()
@@ -30,14 +33,19 @@ func (u *User) Add(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{u.ID, u.Username, u.Password, u.Email, u.IsAdmin}
 		_, _, e = db.Run(c, userAddQuery, p, nil)
+		if e != nil {
+			e = errors.Wrap(e, "unable to create the new user")
+		}
 	})
 
 	return e
 }
 
 // Update updates the user with data of a new user object.
-// `c` is an optional database connection.
-// `uu` is the user with the update information
+//
+// "uu" is the user with the update information
+// "c" is an optional database connection.
+//
 // Returns any error (e) occured.
 func (u *User) Update(uu *User, c *db.Conn) (e error) {
 	if uu.Username != "" {
@@ -59,6 +67,9 @@ func (u *User) Update(uu *User, c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{u.Username, u.Password, u.Email, u.IsAdmin, u.ID}
 		_, _, e = db.Run(c, userUpdateQuery, p, nil)
+		if e != nil {
+			e = errors.Wrapf(e, "unable to update the user %s (%s)", u.Username, u.ID)
+		}
 	})
 
 	return e
@@ -72,6 +83,9 @@ func (u *User) Delete(c *db.Conn) (e error) {
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{u.ID}
 		_, _, e = db.Run(c, userDeleteQuery, p, nil)
+		if e != nil {
+			e = errors.Wrapf(e, "unable to delete the user %s (%s)", u.Username, u.ID)
+		}
 	})
 
 	return e

@@ -19,7 +19,8 @@ import (
 */
 
 // SetPassword takes the plain password of the user and encrypt it before it is stored.
-// `p`: Is the user's password in plain-text.
+//
+// "p" is the user's password in plain-text.
 func (u *User) SetPassword(p string) {
 	pba := []byte(p)
 	c, cerr := bcrypt.GenerateFromPassword(pba, bcrypt.DefaultCost)
@@ -41,12 +42,20 @@ func (u *User) ComparePassword(p string) bool {
 		cba = []byte(u.Password)
 		err error
 	)
+
+	// Compare the password.
 	err = bcrypt.CompareHashAndPassword(cba, pba)
+	if err != nil {
+		util.LogErr(errors.Wrapf(err, "%s (%s) password failed to compare", u.Username, u.ID))
+	}
+
 	return err == nil
 }
 
 // GetTokens fetches all the tokens of a specified user.
-// `c` is an optional database connection
+//
+// "c" is an optional database connection.
+//
 // Returns a list of user token (uts).
 func (u *User) GetTokens(c *db.Conn) (uts []*UserToken) {
 	db.MustConnect(c, func(c *db.Conn) {
@@ -56,6 +65,8 @@ func (u *User) GetTokens(c *db.Conn) (uts []*UserToken) {
 			for _, v := range rst {
 				uts = append(uts, v.(*UserToken))
 			}
+		} else {
+			util.LogErr(err)
 		}
 	})
 
