@@ -112,8 +112,8 @@ func Run(dbc *Conn, query string, params []interface{}, outType reflect.Type) (r
 // (e) Any error occured.
 func queryQuery(dbc *sql.DB, query string, params []interface{}, outType reflect.Type) (r []interface{}, c int64, e error) {
 	defer func() {
-		if r := recover().(error); r != nil {
-			e = errors.Wrap(r, "unable to build request result")
+		if r := recover(); r != nil {
+			e = errors.Wrap(r.(error), "unable to build request result")
 		}
 	}()
 

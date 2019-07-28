@@ -36,8 +36,8 @@ func isFile(req *http.Request) bool {
 // (e) Any error occured.
 func getParams(matcher string, req *http.Request) (p map[string]string, e error) {
 	defer func() {
-		if r := recover().(error); r != nil {
-			e = errors.Wrap(r, "error while parsing the parameters")
+		if r := recover(); r != nil {
+			e = errors.Wrap(r.(error), "error while parsing the parameters")
 			p = make(map[string]string)
 		}
 	}()
@@ -78,9 +78,9 @@ func getParams(matcher string, req *http.Request) (p map[string]string, e error)
 // (e) Any error occured.
 func getBody(req *http.Request) (b []byte, e error) {
 	defer func() {
-		if r := recover().(error); r != nil {
+		if r := recover(); r != nil {
 			b = make([]byte, 0)
-			e = errors.Wrap(r, "unable to get request body")
+			e = errors.Wrap(r.(error), "unable to get request body")
 		}
 	}()
 

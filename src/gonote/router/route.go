@@ -26,12 +26,12 @@ func globalHandler(rw http.ResponseWriter, req *http.Request) {
 
 	// Global error handling.
 	defer func() {
-		if r := recover().(error); r != nil {
+		if r := recover(); r != nil {
 			var u *mngment.User
 			if route != nil {
 				u = route.User
 			}
-			InternalError(&rw, r, "An error occured and makes us unable to continue.", u)
+			InternalError(&rw, r.(error), "An error occured and makes us unable to continue.", u)
 		}
 	}()
 
