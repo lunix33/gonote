@@ -27,7 +27,10 @@ echo "*** Building backend..."
 cd $cdir/src/gonote/
 echo "** Installing dependancies..."
 go get
+cd $cdir/src/github.com/mattn/go-sqlite3
+go build --tags "sqlite_foreign_keys"
 echo "* Compile files..."
+cd $cdir/src/gonote/
 go install
 
 echo "*** Collecting build files..."

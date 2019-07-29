@@ -14,6 +14,9 @@ type NoteSearchCriterions struct {
 	Trash    *string
 	Public   *string
 	Text     *string
+	Tags     *[]string
+	DateFrom *string
+	DateTo   *string
 	Order    *string
 	Limit    *int
 	Offset   *int
@@ -107,8 +110,8 @@ func SearchNotes(crits NoteSearchCriterions, c *db.Conn) (sr []*Note) {
 // (p) The parameters associated with the statement.
 func noteBuildWhere(crits NoteSearchCriterions) (w string, p []interface{}) {
 	w = "WHERE "
-	p = make([]interface{}, 0, 3)
-	clauses := make([]string, 0, 4)
+	p = make([]interface{}, 0, 5)
+	clauses := make([]string, 0, 6)
 
 	// User search
 	if crits.Username != nil {
@@ -142,6 +145,27 @@ func noteBuildWhere(crits NoteSearchCriterions) (w string, p []interface{}) {
 			"Note"."Title" LIKE ? OR
 			"NoteContent"."Content" LIKE ?
 		)`)
+	}
+
+	// Tag search
+	if crits.Tags != nil {
+		// Add all the tags to the parameter array.
+		for _, v := range *crits.Tags {
+			p = append(p, v)
+		}
+
+		paramsStr := ""
+		if l := len(*crits.Tags); l > 0 {
+			paramsStr = strings.Repeat("?,", l)[:l-1]
+		}
+		clauses = append(clauses, fmt.Sprintf(
+			`"NoteTag"."Name" IN (%s)`, paramsStr))
+	}
+
+	// Date search
+	if crits.DateFrom != nil && crits.DateTo != nil {
+		p = append(p, crits.DateFrom, crits.DateTo)
+		clauses = append(clauses, `"NoteContent"."Updated" BETWEEN ? AND ?`)
 	}
 
 	w += strings.Join(clauses, " AND\n")

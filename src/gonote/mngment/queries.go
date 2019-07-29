@@ -126,7 +126,8 @@ const (
 		SELECT DISTINCT("Note"."ID"), "Note"."Title", "Note"."UserID", "Note"."Public", "Note"."Added", "Note"."Deleted"
 		FROM "Note"
 		INNER JOIN "NoteContent" ON "NoteContent"."NoteID" = "Note"."ID"
-		INNER JOIN "User" ON "User"."ID" = "Note"."UserID"`
+		INNER JOIN "User" ON "User"."ID" = "Note"."UserID"
+		INNER JOIN "NoteTag" ON "NoteTag"."NoteID" = "Note"."ID"`
 
 	noteAddQuery = `
 		INSERT INTO "Note" (
