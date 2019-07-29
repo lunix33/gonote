@@ -4,8 +4,6 @@ import (
 	"gonote/db"
 	"gonote/mngment"
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 const utilRteInfoAddr = "^/util/info$"
@@ -16,8 +14,6 @@ type utilRteInfoResponse struct {
 }
 
 func utilRteInfo(rw *http.ResponseWriter, req *http.Request, r *Route) {
-	InternalError(rw, errors.New("Random error"), "Friendly error", r.User)
-	return
 	// get the application information from the DB.
 	var (
 		customset *mngment.Setting

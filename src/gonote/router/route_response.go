@@ -22,7 +22,7 @@ const (
 type HTTPStatus struct {
 	Status  string
 	Message interface{}
-	Error   HTTPStatusResponseError
+	Error   *HTTPStatusResponseError
 }
 
 // HTTPStatusResponseError is the error message emitted to the client.
@@ -62,15 +62,17 @@ func InternalError(rw *http.ResponseWriter, err error, friendly string, usr *mng
 		Status: HTTPStatusError}
 
 	// Add the error object based on the user logged in.
-	if usr.IsAdmin {
-		status.Error = HTTPStatusResponseError{
-			Message: fmt.Sprintf("%v", err),
-			Stack:   fmt.Sprintf("%+v", err)}
+	if usr != nil && usr.IsAdmin {
+		status.Error = &HTTPStatusResponseError{
+			Friendly: friendly,
+			Message:  fmt.Sprintf("%v", err),
+			Stack:    fmt.Sprintf("%+v", err)}
 	} else {
-		status.Error = HTTPStatusResponseError{
+		status.Error = &HTTPStatusResponseError{
 			Friendly: friendly}
 	}
 
+	util.LogErr(err)
 	WriteResponse(rw, status)
 }
 
