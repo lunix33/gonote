@@ -26,11 +26,6 @@ const securityRteLoginAddr = "^/login$"
 // securityRteLogin reponds to request to the "/login" (POST) route.
 // It logins the user and send back the appropriate login token.
 func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
-	if req.Method != http.MethodPost {
-		NotFound(rw)
-		return
-	}
-
 	postData := loginPostData{}
 	if err := errors.Wrap(json.Unmarshal(r.Body, &postData), "unable to parse request body"); err != nil {
 		InternalError(rw, err, "We weren't able to get your login credentials correctly.", r.User)
@@ -70,11 +65,6 @@ const securityRteLogoutAddr = "^/logout$"
 // securityRteLogout respond to the "/logout" (GET) route.
 // It logouts the user from the system by deleting the user token.
 func securityRteLogout(rw *http.ResponseWriter, req *http.Request, r *Route) {
-	if req.Method != http.MethodGet {
-		NotFound(rw)
-		return
-	}
-
 	uid, token, err := decodeToken(req)
 	if err == nil {
 		db.MustConnect(nil, func(c *db.Conn) {

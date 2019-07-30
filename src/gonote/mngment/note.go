@@ -18,7 +18,7 @@ type Note struct {
 	UserID  string
 	Public  bool
 	Added   time.Time
-	Deleted bool
+	Deleted int64
 }
 
 // Delete trash or delete a note from the database.
@@ -35,7 +35,7 @@ func (n *Note) Delete(c *db.Conn) (e error) {
 
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{n.ID}
-		if !n.Deleted {
+		if n.Deleted == 0 {
 			_, _, e = db.Run(c, noteTrashQuery, p, nil)
 		} else {
 			_, _, e = db.Run(c, noteDeleteQuery, p, nil)
@@ -61,7 +61,7 @@ func (n *Note) Add(c *db.Conn) (e error) {
 	n.ID = uuid.New().String()
 	n.Title = html.EscapeString(n.Title)
 	n.Added = time.Now()
-	n.Deleted = false
+	n.Deleted = 0
 
 	db.MustConnect(c, func(c *db.Conn) {
 		p := []interface{}{n.ID, n.Title, n.UserID, n.Public}
