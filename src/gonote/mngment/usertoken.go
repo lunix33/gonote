@@ -3,6 +3,7 @@ package mngment
 import (
 	"gonote/db"
 	"gonote/util"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,6 +46,7 @@ func (ut *UserToken) Add(c *db.Conn) (e error) {
 	if ut.IP == "" {
 		return errors.New("the IP of the client must be set")
 	}
+	ut.setIP()
 
 	// Insert the token in the DB.
 	db.MustConnect(c, func(c *db.Conn) {
@@ -75,6 +77,7 @@ func (ut *UserToken) Refresh(c *db.Conn) (e error) {
 	if ut.IP == "" {
 		return errors.New("the IP of the client must be set")
 	}
+	ut.setIP()
 
 	// Update the token with a new IP and a new expiration.
 	db.MustConnect(c, func(c *db.Conn) {
@@ -152,4 +155,10 @@ func (ut *UserToken) setExpiry() {
 	}
 
 	ut.Expiry = exp
+}
+
+// setIP sets the token's IP by properly formatting it.
+func (ut *UserToken) setIP() {
+	ipSlice := strings.Split(ut.IP, ":")
+	ut.IP = ipSlice[0]
 }
