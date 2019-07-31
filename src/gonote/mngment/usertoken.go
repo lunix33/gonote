@@ -107,10 +107,11 @@ func (ut *UserToken) Delete(c *db.Conn) (e error) {
 // Validate verify if a token is still valid.
 // It also delete invalid tokens and one-time tokens (when used)
 //
-// "c" is an optional database connection
+// "dry" True if the application should dry run the validation.
+// "c" is an optional database connection.
 //
 // Returns wether or not a token is valid (v).
-func (ut *UserToken) Validate(c *db.Conn) (v bool) {
+func (ut *UserToken) Validate(dry bool, c *db.Conn) (v bool) {
 	var (
 		now = time.Now()
 		err error
@@ -119,13 +120,15 @@ func (ut *UserToken) Validate(c *db.Conn) (v bool) {
 		v = true
 
 		// Remove One time token
-		if ut.Type == PasswordResetToken {
+		if ut.Type == PasswordResetToken && !dry {
 			err = ut.Delete(c)
 		}
 	} else {
 		// Token is expired.
 		v = false
-		err = ut.Delete(c)
+		if !dry {
+			err = ut.Delete(c)
+		}
 	}
 
 	if err != nil {

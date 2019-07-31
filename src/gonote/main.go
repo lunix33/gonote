@@ -28,6 +28,9 @@ func main() {
 	// Register the web routes.
 	router.RegisterRoute()
 
+	// Start token cleanup routine
+	go mngment.TokenCleanupRoutine()
+
 	// Start the web server on designated interface and port.
 	log.Printf("Listening on: %s\n", listen)
 	util.LogErr(http.ListenAndServe(listen, nil))

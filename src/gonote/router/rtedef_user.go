@@ -23,8 +23,8 @@ func (userRteHandler) Get(rw *http.ResponseWriter, req *http.Request, r *Route) 
 		})
 
 		if user != nil {
-			// If the current user isn't an admin, secure the user details.
-			if !r.User.IsAdmin {
+			// Secure the user details.
+			if !r.User.IsAdmin && r.User.ID != user.ID {
 				user.Password = ""
 				user.Email = ""
 			}

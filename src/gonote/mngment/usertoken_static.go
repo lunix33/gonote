@@ -3,7 +3,9 @@ package mngment
 import (
 	"gonote/db"
 	"gonote/util"
+	"log"
 	"reflect"
+	"time"
 )
 
 // GetUserToken fetch in the database the token associated with a specified user.
@@ -25,4 +27,23 @@ func GetUserToken(t string, u string, c *db.Conn) (r *UserToken) {
 	})
 
 	return r
+}
+
+// TokenCleanupRoutine is a long running routine made to cleanup the invalid tokens every 12 hours.
+func TokenCleanupRoutine() {
+	for {
+		log.Println("Runinng Token cleanup...")
+
+		var cleanupCount int
+		db.MustConnect(nil, func(c *db.Conn) {
+			// TODO: Get all the user tokens, and validate every token.
+			//       Count the number of token deleted with "cleanupCount".
+			//       Run every validation with "dry" to true.
+		})
+
+		log.Printf("%d tokens were cleanned up...\n", cleanupCount)
+
+		// Execute exery 12 hours.
+		time.Sleep(12 * time.Hour)
+	}
 }
