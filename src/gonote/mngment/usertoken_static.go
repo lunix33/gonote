@@ -29,6 +29,24 @@ func GetUserToken(t string, u string, c *db.Conn) (r *UserToken) {
 	return r
 }
 
+// GetAllUserTokens gets all the users tokens.
+//
+// "c" is an optional database connection.
+//
+// Returns a list of user tokents (t).
+func GetAllUserTokens(c *db.Conn) (t []*UserToken) {
+	db.MustConnect(c, func(c *db.Conn) {
+		rst, _, err := db.Run(c, userTokenGetAllQuery, nil, reflect.TypeOf(UserToken{}))
+		if err == nil {
+			for _, v := range rst {
+				t = append(t, v.(*UserToken))
+			}
+		}
+	})
+
+	return t
+}
+
 // TokenCleanupRoutine is a long running routine made to cleanup the invalid tokens every 12 hours.
 func TokenCleanupRoutine() {
 	for {
@@ -36,12 +54,18 @@ func TokenCleanupRoutine() {
 
 		var cleanupCount int
 		db.MustConnect(nil, func(c *db.Conn) {
-			// TODO: Get all the user tokens, and validate every token.
-			//       Count the number of token deleted with "cleanupCount".
-			//       Run every validation with "dry" to true.
+			uts := GetAllUserTokens(c)
+			for _, ut := range uts {
+				if !ut.Validate(true, c) {
+					err := ut.Delete(c)
+					if err == nil {
+						cleanupCount++
+					}
+				}
+			}
 		})
 
-		log.Printf("%d tokens were cleanned up...\n", cleanupCount)
+		log.Printf("... %d tokens were cleanned up.\n", cleanupCount)
 
 		// Execute exery 12 hours.
 		time.Sleep(12 * time.Hour)

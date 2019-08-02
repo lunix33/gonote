@@ -9,6 +9,11 @@ const (
 			"UserToken"."Token" = ?
 		LIMIT 1`
 
+	userTokenGetAllQuery = `
+		SELECT "UserToken".*
+		FROM "UserToken"
+		ORDER BY "UserToken"."Expiry"`
+
 	userTokenInsertQuery = `
 		INSERT INTO "UserToken" (
 			"Token", "Type", "UserID", "Expiry", "IP"
