@@ -45,9 +45,6 @@ func (u *User) ComparePassword(p string) bool {
 
 	// Compare the password.
 	err = bcrypt.CompareHashAndPassword(cba, pba)
-	if err != nil {
-		util.LogErr(errors.Wrapf(err, "%s (%s) password failed to compare", u.Username, u.ID))
-	}
 
 	return err == nil
 }

@@ -6,7 +6,6 @@ import (
 	"gonote/mngment"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -37,10 +36,9 @@ func securityRteLogin(rw *http.ResponseWriter, req *http.Request, r *Route) {
 		user := mngment.GetUser(postData.Username, nil)
 		if user != nil && user.ComparePassword(postData.Password) {
 			// Create new token for the user.
-			ipSlice := strings.Split(req.RemoteAddr, ":")
 			tok := mngment.UserToken{
 				UserID: user.ID,
-				IP:     ipSlice[0]}
+				IP:     req.RemoteAddr}
 			if err := errors.Wrap(tok.Add(c), "unable to add user token"); err != nil {
 				InternalError(rw, err, "We weren't able to create your user session.", r.User)
 				return
@@ -86,6 +84,7 @@ func securityRteLogout(rw *http.ResponseWriter, req *http.Request, r *Route) {
 			// Token was not found.
 			NotFound(rw)
 		})
+	} else {
+		InternalError(rw, errors.New("unable to decode request token"), "We weren't able to delete your session.", r.User)
 	}
-	InternalError(rw, errors.New("unable to decode request token"), "We weren't able to delete your session.", r.User)
 }
