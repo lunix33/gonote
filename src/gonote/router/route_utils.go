@@ -165,7 +165,7 @@ func Authenticate(req *http.Request, c *db.Conn) (u *mngment.User) {
 		ut := mngment.GetUserToken(token, uid, c)
 
 		// If we found a token and is valid.
-		if ut != nil && ut.Validate(c) {
+		if ut != nil && ut.Validate(false, c) {
 			// Refresh the token
 			ut.IP = req.RemoteAddr
 			err = errors.Wrapf(ut.Refresh(c), "unable to refresh user token %s", ut.Token)

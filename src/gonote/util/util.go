@@ -32,5 +32,5 @@ func DirnameJoin(segments ...string) string {
 //
 // "e" is the error to be printed.
 func LogErr(e error) {
-	log.Fatalf("%+v\n", e)
+	log.Printf("%+v\n", e)
 }

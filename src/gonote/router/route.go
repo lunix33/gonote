@@ -13,7 +13,7 @@ import (
 
 var (
 	box    = packr.New("builtin", util.DirnameJoin("builtin"))
-	routes = make([]RoutePair, 5)
+	routes = make([]RoutePair, 6)
 )
 
 // globalHandler is the general request handler.
@@ -99,6 +99,7 @@ func serveDefault(rw *http.ResponseWriter, req *http.Request, r *Route) {
 func RegisterRoute() {
 	// Initialize route handlers (routes with multiple methods.)
 	noteRte := noteRteHandler{}
+	userRte := userRteHandler{}
 
 	// Route registration
 	routes[0] = RoutePair{
@@ -123,6 +124,11 @@ func RegisterRoute() {
 	routes[4] = RoutePair{
 		Path:     utilRteInfoAddr,
 		Handlers: MethodHandler{http.MethodGet: utilRteInfo}}
+
+	routes[5] = RoutePair{
+		Path: userRteAddr,
+		Handlers: MethodHandler{
+			http.MethodGet: userRte.Get}}
 
 	// Register the router with the http server.
 	http.HandleFunc("/", globalHandler)

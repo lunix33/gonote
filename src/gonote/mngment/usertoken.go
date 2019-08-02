@@ -3,6 +3,7 @@ package mngment
 import (
 	"gonote/db"
 	"gonote/util"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,6 +46,7 @@ func (ut *UserToken) Add(c *db.Conn) (e error) {
 	if ut.IP == "" {
 		return errors.New("the IP of the client must be set")
 	}
+	ut.setIP()
 
 	// Insert the token in the DB.
 	db.MustConnect(c, func(c *db.Conn) {
@@ -75,6 +77,7 @@ func (ut *UserToken) Refresh(c *db.Conn) (e error) {
 	if ut.IP == "" {
 		return errors.New("the IP of the client must be set")
 	}
+	ut.setIP()
 
 	// Update the token with a new IP and a new expiration.
 	db.MustConnect(c, func(c *db.Conn) {
@@ -107,10 +110,11 @@ func (ut *UserToken) Delete(c *db.Conn) (e error) {
 // Validate verify if a token is still valid.
 // It also delete invalid tokens and one-time tokens (when used)
 //
-// "c" is an optional database connection
+// "dry" True if the application should dry run the validation.
+// "c" is an optional database connection.
 //
 // Returns wether or not a token is valid (v).
-func (ut *UserToken) Validate(c *db.Conn) (v bool) {
+func (ut *UserToken) Validate(dry bool, c *db.Conn) (v bool) {
 	var (
 		now = time.Now()
 		err error
@@ -119,13 +123,15 @@ func (ut *UserToken) Validate(c *db.Conn) (v bool) {
 		v = true
 
 		// Remove One time token
-		if ut.Type == PasswordResetToken {
+		if ut.Type == PasswordResetToken && !dry {
 			err = ut.Delete(c)
 		}
 	} else {
 		// Token is expired.
 		v = false
-		err = ut.Delete(c)
+		if !dry {
+			err = ut.Delete(c)
+		}
 	}
 
 	if err != nil {
@@ -149,4 +155,10 @@ func (ut *UserToken) setExpiry() {
 	}
 
 	ut.Expiry = exp
+}
+
+// setIP sets the token's IP by properly formatting it.
+func (ut *UserToken) setIP() {
+	ipSlice := strings.Split(ut.IP, ":")
+	ut.IP = ipSlice[0]
 }
